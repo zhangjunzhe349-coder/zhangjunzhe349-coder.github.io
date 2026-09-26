@@ -1,87 +1,106 @@
-export interface VideoProject {
+/**
+ * 作品数据 —— 唯一入口。
+ *
+ * 结构：扁平列表，一支视频 = 一条作品，按编号排序。
+ * 视频与封面（从成片自动抽帧）由 encode-videos.mjs 生成：
+ *   /videos/<序号>.<型号>.mp4 + /images/stills/<序号>.<型号>.jpg
+ * 新增视频：把原片丢进「视频源文件/」→ node encode-videos.mjs → 在这里加一条。
+ */
+
+export interface Work {
   id: string;
+  /** 列表展示编号 */
+  no: string;
+  /** 片名（产品型号） */
   title: string;
-  description: string;
-  thumbnail: string;
-  videoUrl: string;
-  platform: 'bilibili' | 'youtube' | 'local';
-  category: string;
+  /** 视频地址 */
+  video: string;
+  /** 封面静帧（自动抽帧） */
+  poster: string;
   role: string;
   date: string;
   tags: string[];
 }
 
-export const projects: VideoProject[] = [
+export const works: Work[] = [
   {
-    id: "project-6",
-    title: "项目 6",
-    description: "炭炉、实拍、特效合成",
-    thumbnail: "/images/project8.jpg",
-    videoUrl: "https://player.bilibili.com/player.html?bvid=BV1dGN46mEQc",
-    platform: "bilibili",
-    category: "商业作品（亚马逊）",
-    role: "AI生成 / 剪辑 / 实拍 / 合成",
-    date: "2026",
-    tags: ["AI生成", "剪辑"],
+    id: "gl5101b",
+    no: "01",
+    title: "GL5101B",
+    video: "/videos/1.GL5101B.mp4",
+    poster: "/images/stills/1.GL5101B.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.05",
+    tags: ["产品视频"],
   },
   {
-    id: "project-5",
-    title: "项目 5",
-    description: "铁板烧、摄影棚、特效合成",
-    thumbnail: "/images/project7.jpg",
-    videoUrl: "https://player.bilibili.com/player.html?bvid=BV155N46jEyk",
-    platform: "bilibili",
-    category: "商业作品（亚马逊）",
-    role: "AI生成 / 剪辑 / 特效",
-    date: "2026",
-    tags: ["AI生成", "剪辑"],
+    id: "gl4103s",
+    no: "02",
+    title: "GL4103S",
+    video: "/videos/2.GL4103S.mp4",
+    poster: "/images/stills/2.GL4103S.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.05",
+    tags: ["产品视频"],
   },
   {
-    id: "project-4",
-    title: "项目 4",
-    description: "户外、取暖器、混剪、节奏感",
-    thumbnail: "/images/project4.jpg",
-    videoUrl: "https://player.bilibili.com/player.html?bvid=BV195N46LEy4",
-    platform: "bilibili",
-    category: "商业作品（亚马逊）",
-    role: "AI生成 / 剪辑 / 包装",
-    date: "2026",
-    tags: ["AI生成", "剪辑"],
+    id: "prd28s",
+    no: "03",
+    title: "PRD28S",
+    video: "/videos/3.PRD28S.mp4",
+    poster: "/images/stills/3.PRD28S.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.06",
+    tags: ["产品视频"],
   },
   {
-    id: "project-3",
-    title: "项目 3",
-    description: "铁板烧、美食制作、泳池",
-    thumbnail: "/images/project3.jpg",
-    videoUrl: "https://player.bilibili.com/player.html?bvid=BV1R5N46LE3Q",
-    platform: "bilibili",
-    category: "商业作品（亚马逊）",
-    role: "AI生成 / 剪辑 / 包装",
-    date: "2026",
-    tags: ["AI生成", "剪辑"],
+    id: "gf1703b",
+    no: "04",
+    title: "GF1703B",
+    video: "/videos/4.GF1703B.mp4",
+    poster: "/images/stills/4.GF1703B.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.06",
+    tags: ["产品视频"],
   },
   {
-    id: "project-2",
-    title: "项目 2",
-    description: "烤炉、美食、派对",
-    thumbnail: "/images/project2.jpg",
-    videoUrl: "https://player.bilibili.com/player.html?bvid=BV155N46jEW1",
-    platform: "bilibili",
-    category: "商业作品（亚马逊）",
-    role: "AI生成 / 剪辑 / 包装",
-    date: "2026",
-    tags: ["AI生成", "剪辑"],
+    id: "prd28l",
+    no: "05",
+    title: "PRD28L",
+    video: "/videos/5.PRD28L.mp4",
+    poster: "/images/stills/5.PRD28L.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.06",
+    tags: ["产品视频"],
   },
   {
-    id: "project-1",
-    title: "项目 1",
-    description: "烤炉、美食、聚餐",
-    thumbnail: "/images/project1.jpg",
-    videoUrl: "https://player.bilibili.com/player.html?bvid=BV1R5N46LE5c",
-    platform: "bilibili",
-    category: "商业作品（亚马逊）",
-    role: "AI生成 / 剪辑 / 包装",
-    date: "2026",
-    tags: ["AI生成", "剪辑"],
+    id: "prd36c",
+    no: "06",
+    title: "PRD36C",
+    video: "/videos/6.PRD36C.mp4",
+    poster: "/images/stills/6.PRD36C.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.06",
+    tags: ["产品视频"],
+  },
+  {
+    id: "cg3019t",
+    no: "07",
+    title: "CG3019T",
+    video: "/videos/7.CG3019T.mp4",
+    poster: "/images/stills/7.CG3019T.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.07",
+    tags: ["产品视频"],
+  },
+  {
+    id: "prd36m",
+    no: "08",
+    title: "PRD36M",
+    video: "/videos/8.PRD36M.mp4",
+    poster: "/images/stills/8.PRD36M.jpg",
+    role: "AI 生成 / 实拍 / 剪辑合成",
+    date: "2026.07",
+    tags: ["产品视频"],
   },
 ];

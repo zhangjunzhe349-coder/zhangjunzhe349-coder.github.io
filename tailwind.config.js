@@ -7,8 +7,11 @@ module.exports = {
   ],
   theme: {
     extend: {
+      /* 与 globals.css 的 token 层保持同一套字体栈，避免两套来源打架 */
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-body)'],
+        serif: ['var(--font-display)'],
+        mono: ['var(--font-mono)'],
       },
     },
   },

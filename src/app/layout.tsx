@@ -1,15 +1,28 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
+import { site } from "@/data/site";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import CursorDot from "@/components/CursorDot";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
+/*
+ * 刻意不使用 next/font/google：
+ * Google Fonts 在国内无法访问，构建期拉取字体会直接失败或导致字体回退，
+ * 而"字体"恰恰是本方案最主要的差异化手段。全部改用系统字体栈（见 globals.css 的 token 层）。
+ *
+ * 入场动效只用 CSS 动画（.rise / .enter）：内容默认可见、不依赖 JS 显隐——
+ * 根治「从详情页返回后页面卡在隐藏态、无法点击」的 bug（旧版 IntersectionObserver 门控已移除）。
+ */
 
 export const metadata: Metadata = {
-  title: "作品集 | 个人视频作品集",
-  description: "欢迎来到我的个人视频作品集网站，这里展示了我过往制作的视频项目。",
+  title: site.title,
+  description: site.description,
+  openGraph: {
+    title: site.title,
+    description: site.description,
+    type: "website",
+    locale: "zh_CN",
+  },
 };
 
 export default function RootLayout({
@@ -18,26 +31,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-white text-zinc-900">
-        <header className="sticky top-0 z-50 border-b border-zinc-100 bg-white/80 backdrop-blur-md">
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-            <a href="/" className="text-lg font-bold tracking-tight">
-              作品集
-            </a>
-            <nav className="flex items-center gap-6 text-sm font-medium text-zinc-600">
-              <a href="/" className="hover:text-zinc-900 transition-colors">首页</a>
-              <a href="#" className="hover:text-zinc-900 transition-colors">关于</a>
-              <a href="#" className="hover:text-zinc-900 transition-colors">联系</a>
-            </nav>
-          </div>
-        </header>
+    <html lang="zh-CN">
+      <body className="atmo-grain atmo-vignette">
+        <a href="#main" className="skip-link">
+          跳到主要内容
+        </a>
+        <SiteHeader />
         {children}
-        <footer className="mt-auto border-t border-zinc-100 py-8">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 text-center text-sm text-zinc-400">
-            <p>© {new Date().getFullYear()} 个人作品集. 保留所有权利.</p>
-          </div>
-        </footer>
+        <SiteFooter />
+        <CursorDot />
       </body>
     </html>
   );

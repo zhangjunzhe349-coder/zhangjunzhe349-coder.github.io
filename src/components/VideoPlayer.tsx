@@ -1,55 +1,67 @@
 "use client";
 
-import { VideoProject } from "@/data/projects";
+import { useState } from "react";
 
 interface VideoPlayerProps {
-  project: VideoProject;
+  src: string;
+  poster: string;
+  title: string;
+  /** 同项目多支片子时的小序号，如 01 / 06 */
+  index?: number;
 }
 
-export default function VideoPlayer({ project }: VideoPlayerProps) {
-  // 本地视频：直接用 <video> 标签播放
-  if (project.platform === "local") {
+/**
+ * 播放器 —— 首屏只出封面 + 播放按钮，用户点了才真正加载视频本体，
+ * 一个详情页多支片子时首屏体积依然归零。
+ */
+export default function VideoPlayer({ src, poster, title, index }: VideoPlayerProps) {
+  const [loaded, setLoaded] = useState(false);
+
+  if (!loaded) {
     return (
-      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden">
-        <video
-          src={project.videoUrl}
-          controls
-          className="absolute inset-0 w-full h-full"
-          poster={project.thumbnail}
+      <div className="player">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="player__poster" src={poster} alt="" />
+        <button
+          type="button"
+          className="player__trigger"
+          onClick={() => setLoaded(true)}
+          aria-label={`播放《${title}》`}
         >
-          您的浏览器不支持视频播放。
-        </video>
+          <span className="player__ring">
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14l11-7z" fill="currentColor" />
+            </svg>
+          </span>
+          <span className="player__hint">点击播放</span>
+        </button>
+        {typeof index === "number" ? (
+          <span className="player__index u-mono">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+        ) : null}
       </div>
     );
   }
 
-  const getEmbedUrl = () => {
-    if (project.platform === "bilibili") {
-      const url = new URL(project.videoUrl);
-      url.searchParams.set("high_quality", "1");
-      url.searchParams.set("danmaku", "0");
-      url.searchParams.set("autoplay", "0");
-      return url.toString();
-    }
-    if (project.videoUrl.includes("youtube.com/embed/")) {
-      return project.videoUrl;
-    }
-    const videoId = project.videoUrl.match(/[?&]v=([^&]+)/)?.[1];
-    if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}`;
-    }
-    return project.videoUrl;
-  };
-
   return (
-    <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden">
-      <iframe
-        src={getEmbedUrl()}
-        title={project.title}
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowFullScreen
-        className="absolute inset-0 w-full h-full"
-      />
+    <div className="player">
+      <video
+        src={src}
+        poster={poster}
+        controls
+        autoPlay
+        playsInline
+        preload="auto"
+        aria-label={title}
+      >
+        您的浏览器不支持视频播放。
+      </video>
+      {typeof index === "number" ? (
+        <span className="player__index u-mono">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      ) : null}
     </div>
   );
 }
