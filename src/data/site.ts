@@ -108,6 +108,7 @@ export const site = {
     { label: "作品集", href: "/#projects" },
     { label: "工作经历", href: "/#experience" },
     { label: "技能", href: "/#skills" },
+    { label: "工作流", href: "/workflow" },
     { label: "关于", href: "/#about" },
     { label: "联系", href: "/#contact" },
   ],

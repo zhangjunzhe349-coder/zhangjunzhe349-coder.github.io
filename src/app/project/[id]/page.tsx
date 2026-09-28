@@ -1,4 +1,4 @@
-import { works } from "@/data/projects";
+import { works, worksOrdered } from "@/data/projects";
 import VideoPlayer from "@/components/VideoPlayer";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -23,8 +23,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function WorkPage({ params }: Props) {
   const { id } = await params;
-  const index = works.findIndex((w) => w.id === id);
-  const work = works[index];
+  const index = worksOrdered.findIndex((w) => w.id === id);
+  const work = worksOrdered[index];
 
   if (!work) {
     return (
@@ -43,8 +43,8 @@ export default async function WorkPage({ params }: Props) {
     );
   }
 
-  const prev = works[(index - 1 + works.length) % works.length];
-  const next = works[(index + 1) % works.length];
+  const prev = worksOrdered[(index - 1 + worksOrdered.length) % worksOrdered.length];
+  const next = worksOrdered[(index + 1) % worksOrdered.length];
 
   return (
     <main id="main">

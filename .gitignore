@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 视频托管在腾讯云 COS，不入库（原片见工作区「视频源文件/」）
+/public/videos/*.mp4

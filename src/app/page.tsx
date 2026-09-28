@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { works } from "@/data/projects";
+import { works, worksOrdered } from "@/data/projects";
 import { keywords, site } from "@/data/site";
 import WorkIndex from "@/components/WorkIndex";
 
@@ -122,7 +122,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ============ ② 作品集：扁平编号列表，一支视频一条 ============ */}
+      {/* ============ ② 作品集：封面卡片网格，倒序（最新在前） ============ */}
       <section id="projects" className="section" aria-labelledby="projects-title">
         <div className="wrap">
           <SectionHead
@@ -132,7 +132,7 @@ export default function Home() {
             note={`${String(works.length).padStart(2, "0")} 支成片 · 点击进入播放`}
           />
 
-          <WorkIndex works={works} />
+          <WorkIndex works={worksOrdered} />
         </div>
       </section>
 
@@ -206,6 +206,38 @@ export default function Home() {
                 </div>
               </div>
             ))}
+
+            {/* 能力演示：AIGC 六步生产工作流（独立页） */}
+            <Link href="/workflow" className="flow-entry rise">
+              <span className="flow-entry__body">
+                <span className="u-mono section-eyebrow">
+                  AIGC PIPELINE · 能力演示
+                </span>
+                <span className="flow-entry__title">
+                  从素材到成片的六步生产工作流
+                </span>
+                <span className="flow-entry__desc">
+                  整理资料 → 策划脚本 → 确定主场景 → 拆卖点分镜 → 精修生视频 → 后期成片。
+                  一套可重复执行、可沉淀资产的标准动作。
+                </span>
+              </span>
+              <span className="flow-entry__cta">
+                查看完整工作流
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M7 17L17 7M9 7h8v8" />
+                </svg>
+              </span>
+            </Link>
           </div>
         </div>
       </section>
