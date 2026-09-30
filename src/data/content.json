@@ -1,0 +1,432 @@
+{
+  "site": {
+    "name": "张俊哲",
+    "meta": "求职作品集 / PORTFOLIO 2026",
+    "title": "张俊哲 · 视频拍摄剪辑师｜AIGC 广告创作者",
+    "description": "视频拍摄剪辑师 / AIGC 广告创作者——独立完成品牌短视频、广告片的策划、拍摄、AIGC 生成、剪辑调色全流程。",
+    "heroTitle": {
+      "line1": "视频拍摄剪辑师",
+      "line2": "AIGC",
+      "accent": "广告创作者"
+    },
+    "heroEyebrow": "求职作品集 · 2026",
+    "heroSub": "独立完成品牌短视频 / 广告片的策划、拍摄、AIGC 生成、剪辑调色全流程——从创意到成片，一个人跑通整条链路。",
+    "portrait": "/images/portrait.jpg",
+    "resumeUrl": "/resume.pdf",
+    "about": [
+      "我是张俊哲，视频创作者。擅长实拍与 AIGC 结合制作品牌广告、宣传片：既能线下实拍（构图、运镜、布光），也能用 AI 影像工具快速完成广告片从策划、分镜到成片的全链路。",
+      "熟悉短视频传播逻辑，会根据投放数据复盘并优化视频节奏与卖点呈现。对汽车品牌广告、产品宣传片有浓厚兴趣，目标是在品牌内容的一线把「创意—拍摄—生成—成片」这条链路跑得又快又好。"
+    ],
+    "education": {
+      "school": "浙江理工大学",
+      "major": "环境艺术设计",
+      "degree": "本科",
+      "period": "2021.09 – 2025.06"
+    },
+    "experience": [
+      {
+        "company": "扉斯拓户外有限公司",
+        "role": "AI 视频制作",
+        "period": "2026.04 – 2026.10",
+        "points": [
+          "负责户外品类商业广告视频产出，使用 AI 画布工具完成亚马逊产品短视频、TVC 广告片，覆盖卖点展示、场景化演绎等类型。",
+          "拆解亚马逊平台视频规范与受众偏好，结合产品定位完成脚本构思、分镜规划，用 AI 影像工具生成实拍难以实现的户外宏大场景。",
+          "统筹剪辑、调色、音频配乐、字幕输出的全链路制作，输出符合投放标准的成片；复盘投放反馈，迭代画面风格与卖点呈现。"
+        ],
+        "tags": [
+          "亚马逊",
+          "TVC",
+          "AIGC"
+        ]
+      },
+      {
+        "company": "德佑房产",
+        "role": "拍摄 + 剪辑",
+        "period": "2025.09 – 2025.12",
+        "points": [
+          "独立负责新房 / 二手房源视频全流程：调研楼盘与客群、构思突出房源价值的脚本，实地拍摄（中近远景切换、推拉摇移、云台保障画质），剪映剪辑 + AI 配音旁白。",
+          "针对不同房源类型调整拍摄风格：新房侧重空间美感与价值传递，二手房突出实景优势与实用性；口播内容与画面呈现高效对齐。",
+          "建立房产视频素材库并按房源类型 / 场景维度归档，定期复盘推广数据，优化后续拍摄与剪辑策略。"
+        ],
+        "tags": [
+          "实拍",
+          "剪辑",
+          "房产"
+        ]
+      }
+    ],
+    "skills": [
+      {
+        "group": "视频后期",
+        "items": [
+          "达芬奇",
+          "Premiere Pro",
+          "剪映",
+          "剪辑调色",
+          "音频 / 配音配乐",
+          "字幕包装"
+        ]
+      },
+      {
+        "group": "AI 影像工具",
+        "items": [
+          "Tapnow",
+          "Lovart",
+          "Seedance 2.0",
+          "可灵 O3",
+          "LiblibAI",
+          "Midjourney",
+          "Gemini"
+        ]
+      },
+      {
+        "group": "拍摄硬件",
+        "items": [
+          "单反 / 微单",
+          "稳定器 / 云台",
+          "构图运镜",
+          "布光"
+        ]
+      },
+      {
+        "group": "内容能力",
+        "items": [
+          "脚本撰写",
+          "分镜设计",
+          "广告创意策划",
+          "数据分析复盘",
+          "跨方沟通"
+        ]
+      }
+    ],
+    "contact": {
+      "email": "13761639428@163.com",
+      "phone": "",
+      "socials": [
+        {
+          "label": "B 站",
+          "url": ""
+        },
+        {
+          "label": "小红书",
+          "url": ""
+        },
+        {
+          "label": "抖音",
+          "url": ""
+        }
+      ]
+    },
+    "nav": [
+      {
+        "label": "首页",
+        "href": "/#home"
+      },
+      {
+        "label": "作品集",
+        "href": "/#projects"
+      },
+      {
+        "label": "工作经历",
+        "href": "/#experience"
+      },
+      {
+        "label": "技能",
+        "href": "/#skills"
+      },
+      {
+        "label": "工作流",
+        "href": "/workflow"
+      },
+      {
+        "label": "关于",
+        "href": "/#about"
+      },
+      {
+        "label": "联系",
+        "href": "/#contact"
+      }
+    ]
+  },
+  "keywords": [
+    "AIGC",
+    "实拍",
+    "剪辑调色",
+    "分镜",
+    "广告策划",
+    "TVC",
+    "品牌短片",
+    "AI 影像"
+  ],
+  "works": [
+    {
+      "id": "gl5101b",
+      "no": "01",
+      "title": "GL5101B · 黑色气炉",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/1.GL5101B.mp4",
+      "poster": "/images/covers/1.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.05",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "gl4103s",
+      "no": "02",
+      "title": "GL4103S · 银色气炉",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/2.GL4103S.mp4",
+      "poster": "/images/covers/2.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.05",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "prd28s",
+      "no": "03",
+      "title": "PRD28S · 铁板烧",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/3.PRD28S.mp4",
+      "poster": "/images/covers/3.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.06",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "gf1703b",
+      "no": "04",
+      "title": "GF1703B · 取暖火盆",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/4.GF1703B.mp4",
+      "poster": "/images/covers/4.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.06",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "prd28l",
+      "no": "05",
+      "title": "PRD28L · 铁板烧",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/5.PRD28L.mp4",
+      "poster": "/images/covers/5.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.06",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "prd36c",
+      "no": "06",
+      "title": "PRD36C · 铁板烧",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/6.PRD36C.mp4",
+      "poster": "/images/covers/6.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.06",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "cg3019t",
+      "no": "07",
+      "title": "CG3019T · 碳炉",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/7.CG3019T.mp4",
+      "poster": "/images/covers/7.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.07",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "prd36m",
+      "no": "08",
+      "title": "PRD36M · 铁板烧",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/8.PRD36M.mp4",
+      "poster": "/images/covers/8.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.07",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "gs201",
+      "no": "09",
+      "title": "GS201 · 黑色小气炉",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/9.GS201.mp4",
+      "poster": "/images/covers/9.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.08",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "kt2435",
+      "no": "10",
+      "title": "KT2435 · 模块化厨房台",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/10.KT2435.mp4",
+      "poster": "/images/covers/10.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.08",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "ct540",
+      "no": "11",
+      "title": "CT540 · 园艺堆肥箱",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/11.CT540.mp4",
+      "poster": "/images/covers/11.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.08",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "wattrex",
+      "no": "12",
+      "title": "Wattrex · 电动螺丝刀",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/12.Wattrex.mp4",
+      "poster": "/images/covers/12.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.09",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "st3201b",
+      "no": "13",
+      "title": "ST3201B · 吧台餐车 1",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/13.ST3201B.mp4",
+      "poster": "/images/covers/13.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.09",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "st3202b",
+      "no": "14",
+      "title": "ST3202B · 园艺吧台 1",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/14.ST3202B.mp4",
+      "poster": "/images/covers/14.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.09",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "st3203b",
+      "no": "15",
+      "title": "ST3203B · 园艺吧台 2",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/15.ST3203B.mp4",
+      "poster": "/images/covers/15.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.09",
+      "tags": [
+        "产品视频"
+      ]
+    },
+    {
+      "id": "st3204b",
+      "no": "16",
+      "title": "ST3204B · 吧台餐车 2",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/16.ST3204B.mp4",
+      "poster": "/images/covers/16.jpg",
+      "role": "AI 生成 / 实拍 / 剪辑合成",
+      "date": "2026.09",
+      "tags": [
+        "产品视频"
+      ]
+    }
+  ],
+  "workflow": {
+    "intro": {
+      "eyebrow": "AIGC CONTENT PIPELINE · 个人方法论",
+      "title": "从素材到成片的六步生产工作流",
+      "sub": "把模糊的创意需求，拆成可重复执行、可沉淀资产、可交付协作的标准动作。"
+    },
+    "steps": [
+      {
+        "no": "01",
+        "stage": "INPUT",
+        "title": "整理所有现有资料",
+        "body": [
+          "卖点、场景、拍摄、模型——全部整合进画布。"
+        ],
+        "note": "Agent 阅读本地文件 → 卖点自动总结"
+      },
+      {
+        "no": "02",
+        "stage": "PLAN",
+        "title": "策划案：脚本 + 镜头创意",
+        "body": [
+          "脑中大致有画面；没灵感就找对标。"
+        ],
+        "note": "把想法发给 AI，让它输出专业的静图 / 动态视频提示词脚本。"
+      },
+      {
+        "no": "03",
+        "stage": "VISUAL",
+        "title": "确定主场景产品图 + 人物聚餐图",
+        "body": [
+          "沉淀的 Skill 效果总不理想，本质在这一步。"
+        ],
+        "key": true,
+        "routes": [
+          {
+            "label": "路线 A",
+            "text": "反推参考图 + 加入 Z 轴空间关系。"
+          },
+          {
+            "label": "路线 B",
+            "text": "只用简单提示词描述人物、带到一点场景，让 AI 自由发挥——过程中自然抽到好人物、好场景。"
+          }
+        ]
+      },
+      {
+        "no": "04",
+        "stage": "STORYBOARD",
+        "title": "确定卖点分镜",
+        "body": [
+          "根据实拍换底 / 建模，挑出可用的白底图资产。",
+          "用「场景图 + 脚本」抽 9 宫格分镜；脚本要精简，去掉无关噪音。脑中过一遍画面，没灵感就找对标——参考帧做像素级反推。"
+        ]
+      },
+      {
+        "no": "05",
+        "stage": "REFINE",
+        "title": "精修卖点分镜 → 生视频",
+        "body": [
+          "把分镜图传进去，一段一段手修提示词，逐帧打磨，再生成动态视频。"
+        ]
+      },
+      {
+        "no": "06",
+        "stage": "DELIVER",
+        "title": "后期成片",
+        "body": [
+          "剪辑、配乐、补拍、包装——交付上线。"
+        ]
+      }
+    ],
+    "principles": [
+      "资产沉淀：白底图 / Skill / 提示词",
+      "一张对的参考图 > 长提示词",
+      "人在回路，逐段精修"
+    ],
+    "motto": "AI 出初稿，人做导演。"
+  }
+}
