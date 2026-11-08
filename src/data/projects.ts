@@ -31,10 +31,20 @@ export interface Work {
   tags: string[];
 }
 
+/**
+ * 封面同样放腾讯云 COS：GitHub Pages 的国际线路拉一张 38KB 小图要 1~2 秒，
+ * 16 张铺满旋风墙要二十多秒。路径结构保持不变（images/covers/...），只在前面拼域名。
+ * 上传：node --env-file=.cos.env tools/upload-covers-cos.mjs
+ */
+const COVERS_CDN = "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com";
+
+const onCdn = (p: string) => (p.startsWith("/images/") ? COVERS_CDN + p : p);
+
 const withSmall = (w: Work): Work => ({
   ...w,
-  posterSm: w.poster.replace("/images/covers/", "/images/covers/sm/").replace(/\.jpg$/i, ".webp"),
-  posterSmJpg: w.poster.replace("/images/covers/", "/images/covers/sm/"),
+  poster: onCdn(w.poster),
+  posterSm: onCdn(w.poster.replace("/images/covers/", "/images/covers/sm/").replace(/\.jpg$/i, ".webp")),
+  posterSmJpg: onCdn(w.poster.replace("/images/covers/", "/images/covers/sm/")),
 });
 
 export const works: Work[] = (content.works as Work[]).map(withSmall);
