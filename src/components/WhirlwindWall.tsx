@@ -322,6 +322,10 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), 0);
     }
 
+    // 自测钩子：纹理加载状态（排查「卡片黑块」用）
+    (window as unknown as Record<string, unknown>).__swTex = () =>
+      textures.map((t, i) => (t.image ? i + ":ok" : i + ":pending")).join(" ");
+
     // 自测钩子：正前方那张卡的屏幕坐标（无头测试用来找可点位置）
     (window as unknown as Record<string, unknown>).__swFront = () => {
       // 取「投影后离屏幕中心最近」的那张：同一角度有多层，只有一张在画面里
@@ -408,6 +412,9 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
 
         const targetHover = i === hovering ? 1 : 0;
         c.hover += (targetHover - c.hover) * Math.min(1, dt * 8);
+
+        // 封面还没到就别画：未绑定的贴图会渲染成纯黑方块，比“没这张卡”难看得多
+        c.mesh.visible = !!c.mat.map?.image;
 
         if (c.shader) {
           c.shader.uniforms.uDim.value = (1 - back * (1 - C.backDim)) * (1 + c.hover * 0.1);
