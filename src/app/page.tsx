@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { works, worksOrdered } from "@/data/projects";
+import { works, worksFeatured } from "@/data/projects";
 import { keywords, site } from "@/data/site";
 import WorkIndex from "@/components/WorkIndex";
 
@@ -129,10 +129,12 @@ export default function Home() {
             id="projects-title"
             eyebrow="02 · WORKS"
             title="作品集"
-            note={`${String(works.length).padStart(2, "0")} 支成片 · 点击进入播放`}
+            note={`精选 ${String(worksFeatured.length).padStart(2, "0")} 支 · 共 ${String(
+              works.length
+            ).padStart(2, "0")} 支成片`}
           />
 
-          <WorkIndex works={worksOrdered} />
+          <WorkIndex works={worksFeatured} total={works.length} />
         </div>
       </section>
 

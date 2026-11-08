@@ -264,11 +264,13 @@ img {
   display: flex;
   align-items: baseline;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .brand__name {
   font-family: var(--font-display);
   font-size: 19px;
+  white-space: nowrap;
   letter-spacing: 0.06em;
   color: var(--color-text);
 }
@@ -617,11 +619,18 @@ img {
   margin: 0;
 }
 
-/* ---- 作品卡片网格：封面即入口 ---- */
+/* ---- 作品卡片网格：封面即入口（桌面 4 列） ---- */
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(20px, 2.6vw, 36px);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(14px, 1.7vw, 24px);
+}
+
+/* picture 是行内元素，要撑满卡片才不塌 */
+.work-card__media picture {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .work-card {
@@ -709,16 +718,17 @@ img {
 }
 
 .work-card__meta {
+  /* 4 列时宽度有限：标题与信息叠两行，别挤成一串省略号 */
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   min-width: 0;
 }
 
 .work-card__title {
   font-family: var(--font-display);
-  font-size: var(--fs-lg);
+  font-size: clamp(15px, 1.15vw, 18px);
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.1;
@@ -1932,8 +1942,289 @@ html.js .reveal.is-in {
   }
 }
 
+/* ---- 「查看所有」入口：通往旋风视图 ---- */
+.all-entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 28px;
+  margin-top: clamp(24px, 3vw, 40px);
+  padding: clamp(22px, 2.6vw, 32px);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-md);
+  background: radial-gradient(
+      120% 160% at 8% 0%,
+      var(--color-accent-soft),
+      transparent 62%
+    ),
+    var(--color-surface);
+  transition: border-color var(--dur-base) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out),
+    box-shadow var(--dur-slow) var(--ease-out);
+}
+
+.all-entry:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-3);
+}
+
+.all-entry__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.all-entry__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 400;
+  margin: 8px 0 0;
+}
+
+.all-entry__desc {
+  font-size: var(--fs-small);
+  color: var(--color-text-muted);
+  margin: 8px 0 0;
+  max-width: 46em;
+  line-height: 1.7;
+}
+
+.all-entry__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  color: var(--color-accent);
+  font-size: var(--fs-small);
+  white-space: nowrap;
+  transition: background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.all-entry:hover .all-entry__cta {
+  background: var(--color-accent);
+  color: #0d0b0a;
+}
+
+/* 4 列 → 3 列 → 2 列：窄屏别挤成邮票 */
+@media (max-width: 1180px) {
+  .work-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .work-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+
 @media (max-width: 680px) {
   .flow-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   旋风视图 /all —— 全屏螺旋作品墙
+   ============================================================ */
+body.sw-lock {
+  overflow: hidden;
+}
+
+.sw {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #050505;
+  overflow: hidden;
+}
+
+.sw__canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0.2;
+  transition: opacity 900ms var(--ease-out);
+}
+
+.sw__canvas canvas {
+  display: block;
+}
+
+.sw__bar {
+  position: absolute;
+  top: 84px;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 clamp(16px, 3vw, 44px);
+  pointer-events: none;
+}
+
+.sw__back,
+.sw__list {
+  pointer-events: auto;
+}
+
+.sw__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(242, 239, 236, 0.2);
+  background: rgba(10, 9, 9, 0.52);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--color-text);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  transition: border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.sw__back:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.sw__list {
+  font-size: var(--fs-mono);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242, 239, 236, 0.55);
+  border-bottom: 1px solid rgba(242, 239, 236, 0.22);
+  padding-bottom: 3px;
+  transition: color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.sw__list:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.sw__hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(20px, 4vh, 44px);
+  transform: translateX(-50%);
+  z-index: 3;
+  color: rgba(242, 239, 236, 0.42);
+  font-size: var(--fs-mono);
+  letter-spacing: 0.18em;
+  transition: opacity 600ms var(--ease-out);
+  pointer-events: none;
+}
+
+.sw__hint.is-hidden {
+  opacity: 0;
+}
+
+.sw__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: #050505;
+  pointer-events: none;
+  animation: swVeil 900ms var(--ease-out) 260ms forwards;
+}
+
+@keyframes swVeil {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ---- 播放浮层 ---- */
+.sw__player {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: clamp(16px, 4vw, 64px);
+  background: rgba(4, 4, 4, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.sw__stage {
+  width: min(1160px, 92vw);
+}
+
+.sw__stage video {
+  display: block;
+  width: 100%;
+  max-height: 72vh;
+  border-radius: var(--radius-md);
+  background: #000;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.sw__meta {
+  width: min(1160px, 92vw);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+  color: var(--color-text-muted);
+  font-size: var(--fs-small);
+}
+
+.sw__meta h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 400;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.sw__meta p {
+  margin: 0;
+}
+
+.sw__close {
+  position: absolute;
+  top: clamp(16px, 3vh, 28px);
+  right: clamp(16px, 3vw, 32px);
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid rgba(242, 239, 236, 0.24);
+  background: rgba(10, 9, 9, 0.6);
+  color: var(--color-text);
+  transition: border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.sw__close:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+@media (max-width: 680px) {
+  .sw__bar {
+    top: 72px;
+  }
+  .sw__stage video {
+    max-height: 60vh;
   }
 }

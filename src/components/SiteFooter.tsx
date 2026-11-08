@@ -63,7 +63,9 @@ export default function SiteFooter() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
               <ContactRow label="邮箱" value={site.contact.email} />
-              {site.contact.socials.map((social) => {
+              {site.contact.socials
+                .filter((social) => social.url && social.url.trim().length > 0)
+                .map((social) => {
                 const url: string = social.url;
                 return (
                   <div key={social.label}>

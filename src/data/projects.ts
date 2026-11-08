@@ -22,12 +22,30 @@ export interface Work {
   video: string;
   /** 封面图（本地 1280×720） */
   poster: string;
+  /** 小封面 WebP（720×405，由 tools/gen-covers-sm.mjs 生成） */
+  posterSm: string;
+  /** 小封面 JPG 兜底 */
+  posterSmJpg: string;
   role: string;
   date: string;
   tags: string[];
 }
 
-export const works: Work[] = content.works as Work[];
+const withSmall = (w: Work): Work => ({
+  ...w,
+  posterSm: w.poster.replace("/images/covers/", "/images/covers/sm/").replace(/\.jpg$/i, ".webp"),
+  posterSmJpg: w.poster.replace("/images/covers/", "/images/covers/sm/"),
+});
+
+export const works: Work[] = (content.works as Work[]).map(withSmall);
 
 /** 对外展示顺序：倒序（最新作品在前） */
 export const worksOrdered: Work[] = [...works].reverse();
+
+/**
+ * 首页主列表精选（按素材序号保留 2/3/4/6/10/11/12）。
+ * 完整 16 支在 /all 的旋风界面里，通过「查看所有」进入。
+ */
+const FEATURED_NO = ["02", "03", "04", "06", "10", "11", "12"];
+
+export const worksFeatured: Work[] = worksOrdered.filter((w) => FEATURED_NO.includes(w.no));

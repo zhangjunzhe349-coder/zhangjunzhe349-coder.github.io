@@ -104,8 +104,16 @@
       "phone": "",
       "socials": [
         {
+          "label": "GitHub 仓库",
+          "url": "https://github.com/zhangjunzhe349-coder/zhangjunzhe349-coder.github.io"
+        },
+        {
           "label": "B 站",
-          "url": ""
+          "url": "https://space.bilibili.com/1617143876"
+        },
+        {
+          "label": "新片场",
+          "url": "https://www.xinpianchang.com/u16169269"
         },
         {
           "label": "小红书",
