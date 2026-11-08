@@ -15,27 +15,35 @@ import type { Work } from "@/data/projects";
  * - 滚轮给冲量，松手继续滑行，停手后磁吸回整槽位（构图中心永远有卡）
  */
 const CFG = {
-  cardW: 470,
+  cardW: 680,
   cardH: 264,
   segX: 48,
 
   radius: 860,
-  curveScale: 1.2, // 曲率半径 = radius × 该系数（>1 弧面更舒展）
-  cardsPerTurn: 11,
-  slots: 88, // 必须是 cardsPerTurn 的整数倍
-  yStep: 145,
+  curveScale: 1.6, // 曲率半径 = radius × 该系数（>1 弧面更舒展）
+  cardsPerTurn: 6, // 卡大、绕得稀 → 读作「一圈悬浮的卡」，不是一条带
+  slots: 90, // 必须是 cardsPerTurn 的整数倍
+  yStep: 120,
 
   // 斜上方视角：近处大、远处小，螺旋读作一圈立体环（对着参考图调的）
-  camZ: 2180,
+  camZ: 2600,
   camY: 650,
-  lookY: -60,
+  lookY: 160,
   fov: 41,
   groupTilt: 0,
 
-  backDim: 0.22,
-  backBlur: 2.4,
-  dimStart: 0.55,
-  dimEnd: 2.7,
+  backDim: 0.3,
+  backBlur: 2.0,
+  dimStart: 0.7,
+  dimEnd: 2.8,
+
+  // 远处不能压成纯黑（参考视频里远侧卡依旧读得清），所以雾要推得很远
+  fogNear: 3000,
+  fogFar: 6200,
+
+  // 每张卡自己的歪斜量（打破「焊成一条带」的观感）
+  rollAmt: 0.12,
+  yawAmt: 0.09,
 
   wheel: 0.0055,
   ease: 9.5,
@@ -70,6 +78,10 @@ function readOverrides(): typeof CFG {
     backDim: n("dim", CFG.backDim),
     backBlur: n("blur", CFG.backBlur),
     groupTilt: n("tilt", CFG.groupTilt),
+    fogNear: n("fog", CFG.fogNear),
+    fogFar: n("fogf", CFG.fogFar),
+    rollAmt: n("roll", CFG.rollAmt),
+    yawAmt: n("yaw", CFG.yawAmt),
   } as typeof CFG;
 }
 
@@ -103,7 +115,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     if (!host) return;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x050505, 2100, 3800);
+    scene.fog = new THREE.Fog(0x050505, C.fogNear, C.fogFar);
 
     const camera = new THREE.PerspectiveCamera(
       C.fov,
@@ -113,8 +125,8 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     );
     const portrait = host.clientWidth / host.clientHeight < 0.95;
     // 竖屏：镜头跟着收近一点，否则卡片在窄屏里缩成邮票
-    const dollyBase = C.camZ * (portrait ? 1.24 : 1);
-    const camYBase = C.camY * (portrait ? 0.88 : 1);
+    const dollyBase = C.camZ * (portrait ? 1.65 : 1);
+    const camYBase = C.camY * (portrait ? 0.92 : 1);
     const lookYBase = C.lookY * (portrait ? 0.66 : 1);
     camera.position.set(0, camYBase, dollyBase);
     camera.lookAt(0, lookYBase, 0);
@@ -154,6 +166,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       shader: { uniforms: Record<string, { value: number }> } | null;
       work: Work;
       tilt: number;
+      yaw: number;
       phase: number;
       bob: number;
       bobY: number;
@@ -181,7 +194,8 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         mat,
         shader: null,
         work,
-        tilt: (Math.random() - 0.5) * 0.05,
+        tilt: (Math.random() - 0.5) * C.rollAmt,
+        yaw: (Math.random() - 0.5) * C.yawAmt,
         phase: Math.random() * TAU,
         bob: 6 + Math.random() * 14,
         bobY: 8 + Math.random() * 16,
@@ -229,7 +243,9 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     let lastY = 0;
     const pointer = new THREE.Vector2(-10, -10);
 
-    const yMid = (C.slots / 2) * C.yStep; // 让 slot 中心那张落在 y=0
+    // 竖屏纵向空间更窄，螺旋间距放大一点，否则一圈叠一圈看着发闷
+    const step = C.yStep * (portrait ? 1.35 : 1);
+    const yMid = (C.slots / 2) * step; // 让 slot 中心那张落在 y=0
 
     const raycaster = new THREE.Raycaster();
     const meshes = cards.map((c) => c.mesh);
@@ -301,8 +317,8 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
       const isPortrait = w / h < 0.95;
-      camera.position.z = C.camZ * (isPortrait ? 1.24 : 1);
-      camera.position.y = C.camY * (isPortrait ? 0.88 : 1);
+      camera.position.z = C.camZ * (isPortrait ? 1.65 : 1);
+      camera.position.y = C.camY * (isPortrait ? 0.92 : 1);
       camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), 0);
     }
 
@@ -372,7 +388,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         const tt = now * 0.001;
         const floatAmt = 1;
         const y =
-          yMid - slot * C.yStep + Math.sin(tt * 0.7 + c.phase) * c.bobY * floatAmt;
+          yMid - slot * step + Math.sin(tt * 0.7 + c.phase) * c.bobY * floatAmt;
         const r =
           C.radius +
           Math.sin(tt * 0.5 + c.phase * 1.3) * c.bob +
@@ -381,7 +397,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         c.mesh.position.set(r * Math.sin(ang), y, r * Math.cos(ang));
         c.mesh.rotation.set(
           Math.sin(tt * 0.4 + c.phase) * 0.012,
-          ang + Math.sin(tt * 0.45 + c.phase) * c.sway,
+          ang + c.yaw + Math.sin(tt * 0.45 + c.phase) * c.sway,
           c.tilt + c.roll + Math.sin(tt * 0.33 + c.phase) * 0.01
         );
 
@@ -418,7 +434,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       if (e.key === "Escape") setActive(null);
     };
     window.addEventListener("keydown", onKey);
-    document.body.classList.add("sw-lock");
+    document.body.classList.add("sw-lock", "sw-page");
 
     return () => {
       cancelAnimationFrame(raf);
@@ -428,7 +444,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
-      document.body.classList.remove("sw-lock");
+      document.body.classList.remove("sw-lock", "sw-page");
       geometry.dispose();
       textures.forEach((t) => t.dispose());
       cards.forEach((c) => c.mat.dispose());

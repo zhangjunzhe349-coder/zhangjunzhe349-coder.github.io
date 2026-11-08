@@ -2228,3 +2228,13 @@ body.sw-lock {
     max-height: 60vh;
   }
 }
+
+/* 旋风页是全屏信息流，窄屏上不要把六项导航挤成两行压住顶栏 */
+@media (max-width: 900px) {
+  body.sw-page .site-header .nav {
+    display: none;
+  }
+  body.sw-page .sw__hint {
+    letter-spacing: 0.1em;
+  }
+}
