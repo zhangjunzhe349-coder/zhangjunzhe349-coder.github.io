@@ -32,10 +32,17 @@ const CFG = {
   fov: 41,
   groupTilt: 0,
 
-  backDim: 0.22,
+  backDim: 0.5, // 0.22 时后半圈只剩 10% 亮度，在黑背景上等于「空出来一段」
   backBlur: 2.4,
   dimStart: 0.55,
   dimEnd: 2.7,
+
+  // 雾原本写死 2100→3800，而相机在 z=2180、卡片圆半径 860：
+  // 后半圈卡片距离 3040，雾占比 55%，再乘 backDim 0.22 只剩 10% 亮度，
+  // 在 #050505 背景上就是一块纯黑 —— 屏幕上那些「空出来一段」就是它。
+  // 现在推到圆外，让可见度只由 backDim 控制。
+  fogNear: 3400,
+  fogFar: 8000,
 
   wheel: 0.0055,
   ease: 9.5,
@@ -68,6 +75,8 @@ function readOverrides(): typeof CFG {
     cardW: n("cw", CFG.cardW),
     cardH: n("cw", CFG.cardW) * (9 / 16),
     backDim: n("dim", CFG.backDim),
+    fogNear: n("fog", CFG.fogNear),
+    fogFar: n("fogf", CFG.fogFar),
     backBlur: n("blur", CFG.backBlur),
     groupTilt: n("tilt", CFG.groupTilt),
   } as typeof CFG;
@@ -102,8 +111,11 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     const ANGLE = (Math.PI * 2) / C.cardsPerTurn;
     if (!host) return;
 
+    // 窄屏隐藏顶部导航：否则「关于 / 联系」会直接压在卡片上
+    document.body.classList.add("sw-page");
+
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x050505, 2100, 3800);
+    scene.fog = new THREE.Fog(0x050505, C.fogNear, C.fogFar);
 
     const camera = new THREE.PerspectiveCamera(
       C.fov,
@@ -167,7 +179,9 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
 
     for (let i = 0; i < C.slots; i++) {
       // 打散作品索引：同一角度相邻的卡不要总是同一支
-      const k = (i * 3 + Math.floor(i / C.cardsPerTurn) * 5) % works.length;
+      // 每个槽位严格轮转一个作品：连续 16 个槽位必然覆盖全部 16 支，
+      // 屏幕上同时看到的 14 张卡就是 14 支不同的片子（不会重复、不会漏掉首页精选）。
+      const k = ((i % works.length) + works.length) % works.length;
       const work = works[k];
       const mat = new THREE.MeshBasicMaterial({
         map: textures[k],
@@ -306,6 +320,28 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), 0);
     }
 
+    // 临时诊断：每张卡的屏幕位置 / 贴图状态 / 亮度系数
+    (window as unknown as Record<string, unknown>).__awDiag = () => {
+      const rect = host!.getBoundingClientRect();
+      return cards.map((c, i) => {
+        const v = c.mesh.position.clone().project(camera);
+        const sx = Math.round((v.x * 0.5 + 0.5) * rect.width);
+        const sy = Math.round((-v.y * 0.5 + 0.5) * rect.height);
+        const d = camera.position.distanceTo(c.mesh.position);
+        return {
+          i,
+          t: c.work.title.slice(0, 7),
+          sx,
+          sy,
+          onScreen: Math.abs(v.x) < 1.05 && Math.abs(v.y) < 1.05,
+          dist: Math.round(d),
+          tex: c.mat.map && (c.mat.map as THREE.Texture).image ? 'ok' : 'MISSING',
+          dim: c.shader ? +(c.shader.uniforms.uDim.value as number).toFixed(2) : -1,
+          vis: c.mesh.visible as boolean,
+        };
+      });
+    };
+
     // 自测钩子：正前方那张卡的屏幕坐标（无头测试用来找可点位置）
     (window as unknown as Record<string, unknown>).__swFront = () => {
       // 取「投影后离屏幕中心最近」的那张：同一角度有多层，只有一张在画面里
@@ -429,6 +465,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
       document.body.classList.remove("sw-lock");
+      document.body.classList.remove("sw-page");
       geometry.dispose();
       textures.forEach((t) => t.dispose());
       cards.forEach((c) => c.mat.dispose());
