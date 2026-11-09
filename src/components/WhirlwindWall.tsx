@@ -149,16 +149,42 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       C.radius * C.curveScale
     );
 
-    const loader = new THREE.TextureLoader();
-    const textures = works.map((w) => {
-      const t = loader.load(w.posterSm || w.poster);
+    const aniso = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+
+    // 自己管 Image 而不用 TextureLoader：一是失败要重试（偶尔一两张会挂，
+    // 挂了就是一块永久纯黑），二是只有 onload 之后才把 image 挂到纹理上，
+    // 渲染循环据此决定这张卡到底能不能画。
+    function makeTexture(url: string) {
+      const t = new THREE.Texture();
       t.colorSpace = THREE.SRGBColorSpace;
       t.generateMipmaps = true;
       t.minFilter = THREE.LinearMipmapLinearFilter;
       t.magFilter = THREE.LinearFilter;
-      t.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+      t.anisotropy = aniso;
+
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.decoding = "async";
+
+      let attempt = 0;
+      img.onload = () => {
+        t.image = img;
+        t.needsUpdate = true;
+      };
+      img.onerror = () => {
+        attempt += 1;
+        if (attempt <= 3) {
+          // 加个 query 绕过失败缓存再试，间隔递增
+          setTimeout(() => {
+            img.src = `${url}${url.includes("?") ? "&" : "?"}retry=${attempt}&t=${Date.now()}`;
+          }, 400 * attempt);
+        }
+      };
+      img.src = url;
       return t;
-    });
+    }
+
+    const textures = works.map((w) => makeTexture(w.posterSm || w.poster));
 
     type Card = {
       mesh: THREE.Mesh;
@@ -215,7 +241,21 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
           .replace(
             "#include <map_fragment>",
             `
-            vec4 texel = texture2D( map, vMapUv, uBlur );
+            // 注意：texture2D 的第三个参数是 LOD bias（mip 层级偏移），不是模糊半径。
+            // 之前写成 texture2D(map, uv, uBlur)，背面卡 uBlur=2.4 直接被推到 2.4 级 mip，
+            // 小封面在那层只剩几十像素的平均色，再往外就采到 mip 表之外 —— 整张卡渲成
+            // 一片黑，看起来像「空出来一段」。这里改用真正的多点采样做轻微失焦。
+            vec4 texel;
+            if (uBlur > 0.02) {
+              vec2 r = vec2(uBlur * 0.0016, uBlur * 0.0028);
+              texel  = texture2D(map, vMapUv) * 0.36;
+              texel += texture2D(map, vMapUv + vec2( r.x,  0.0)) * 0.16;
+              texel += texture2D(map, vMapUv + vec2(-r.x,  0.0)) * 0.16;
+              texel += texture2D(map, vMapUv + vec2( 0.0,  r.y)) * 0.16;
+              texel += texture2D(map, vMapUv + vec2( 0.0, -r.y)) * 0.16;
+            } else {
+              texel = texture2D(map, vMapUv);
+            }
             diffuseColor *= texel;
             diffuseColor.rgb *= uDim;
             `
@@ -434,6 +474,10 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
           c.shader.uniforms.uBlur.value = back * C.backBlur + speedBlur;
         }
         c.mesh.scale.setScalar(1 + c.hover * 0.06);
+
+        // 封面还没到就先别画：未绑定贴图的材质会渲成纯黑方块，
+        // 比「这张卡晚一点出现」难看得多。
+        c.mesh.visible = !!(c.mat.map && (c.mat.map as THREE.Texture).image);
       }
 
       camera.position.z += (dollyBase + Math.min(fast * 0.5, 1) * 90 - camera.position.z) * Math.min(1, dt * 3);
