@@ -83,14 +83,23 @@ function readOverrides(): typeof CFG {
   } as typeof CFG;
 }
 
+/**
+ * 把平面卡片卷成球面的一片（参考视频里卡片的上下边也是弧的）。
+ * 只用水平弯曲的话，卡片看着像贴在柱子上；上下一起弯才像「球里的一面屏」。
+ */
 function curvedGeometry(w: number, h: number, seg: number, r: number) {
-  const g = new THREE.PlaneGeometry(w, h, seg, 1);
+  const segY = Math.max(2, Math.round((seg * h) / w));
+  const g = new THREE.PlaneGeometry(w, h, seg, segY);
   const pos = g.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
+    const y = pos.getY(i);
     const th = x / r;
-    pos.setX(i, r * Math.sin(th));
-    pos.setZ(i, r * Math.cos(th) - r); // 中间离镜头最近，两侧向内收
+    const ph = y / r;
+    const cp = Math.cos(ph);
+    pos.setX(i, r * cp * Math.sin(th));
+    pos.setY(i, r * Math.sin(ph));
+    pos.setZ(i, r * cp * Math.cos(th) - r); // 中间离镜头最近，四周往里收
   }
   g.computeVertexNormals();
   return g;
