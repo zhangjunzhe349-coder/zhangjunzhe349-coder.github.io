@@ -21,31 +21,21 @@ const CFG = {
 
   radius: 860,
   curveScale: 1.2, // 曲率半径 = radius × 该系数（>1 弧面更舒展）
-  cardsPerTurn: 11, // 密一档 → 卡片连成一条连续弧带（用户要的就是这个「整块流动」的感觉）
+  cardsPerTurn: 11,
   slots: 88, // 必须是 cardsPerTurn 的整数倍
   yStep: 145,
 
-  // 斜上方视角 + 偏长焦：焦距太短时「正面卡撑大、两侧卡挤扁」，
-  // 沿一条带看过去就是「间隔一会长一会短」。推远 + 收窄视野，
-  // 近端与侧端的尺度差从 1.78 倍降到 1.36 倍，节奏才均匀。
-  camZ: 2500,
+  // 斜上方视角：近处大、远处小，螺旋读作一圈立体环（对着参考图调的）
+  camZ: 2180,
   camY: 650,
-  lookY: 0,
-  fov: 28,
+  lookY: -60,
+  fov: 41,
   groupTilt: 0,
 
   backDim: 0.22,
   backBlur: 2.4,
   dimStart: 0.55,
   dimEnd: 2.7,
-
-  // 雾要够远，否则远侧整段卡片被压成纯黑，弧带会断开
-  fogNear: 2600,
-  fogFar: 5200,
-
-  // 每张卡自己的歪斜量：保持很小，密排时一点歪斜就显乱
-  rollAmt: 0.03,
-  yawAmt: 0.015,
 
   wheel: 0.0055,
   ease: 9.5,
@@ -80,10 +70,6 @@ function readOverrides(): typeof CFG {
     backDim: n("dim", CFG.backDim),
     backBlur: n("blur", CFG.backBlur),
     groupTilt: n("tilt", CFG.groupTilt),
-    fogNear: n("fog", CFG.fogNear),
-    fogFar: n("fogf", CFG.fogFar),
-    rollAmt: n("roll", CFG.rollAmt),
-    yawAmt: n("yaw", CFG.yawAmt),
   } as typeof CFG;
 }
 
@@ -117,7 +103,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     if (!host) return;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x050505, C.fogNear, C.fogFar);
+    scene.fog = new THREE.Fog(0x050505, 2100, 3800);
 
     const camera = new THREE.PerspectiveCamera(
       C.fov,
@@ -127,11 +113,11 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     );
     const portrait = host.clientWidth / host.clientHeight < 0.95;
     // 竖屏：镜头跟着收近一点，否则卡片在窄屏里缩成邮票
-    const dollyBase = C.camZ * (portrait ? 1.45 : 1);
+    const dollyBase = C.camZ * (portrait ? 1.24 : 1);
     const camYBase = C.camY * (portrait ? 0.88 : 1);
     const lookYBase = C.lookY * (portrait ? 0.66 : 1);
     camera.position.set(0, camYBase, dollyBase);
-    camera.lookAt(0, lookYBase, C.radius);
+    camera.lookAt(0, lookYBase, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -168,7 +154,11 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       shader: { uniforms: Record<string, { value: number }> } | null;
       work: Work;
       tilt: number;
-      yaw: number;
+      phase: number;
+      bob: number;
+      bobY: number;
+      sway: number;
+      roll: number;
       hover: number;
     };
 
@@ -176,9 +166,8 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     const hoverTarget = { index: -1 };
 
     for (let i = 0; i < C.slots; i++) {
-      // 作品按固定节拍轮转：同一支每隔 16 个槽位出现一次，
-      // 间隔恒定。原来那套哈希打散会让同一支忽近忽远。
-      const k = i % works.length;
+      // 打散作品索引：同一角度相邻的卡不要总是同一支
+      const k = (i * 3 + Math.floor(i / C.cardsPerTurn) * 5) % works.length;
       const work = works[k];
       const mat = new THREE.MeshBasicMaterial({
         map: textures[k],
@@ -192,9 +181,12 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         mat,
         shader: null,
         work,
-        // 歪斜量做得很小：密排时只要一点随机歪，整条弧带就会显乱
-        tilt: (Math.random() - 0.5) * C.rollAmt,
-        yaw: (Math.random() - 0.5) * C.yawAmt,
+        tilt: (Math.random() - 0.5) * 0.05,
+        phase: Math.random() * TAU,
+        bob: 6 + Math.random() * 14,
+        bobY: 8 + Math.random() * 16,
+        sway: 0.008 + Math.random() * 0.018,
+        roll: (Math.random() - 0.5) * 0.16,
         hover: 0,
       };
 
@@ -237,8 +229,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     let lastY = 0;
     const pointer = new THREE.Vector2(-10, -10);
 
-    const step = C.yStep;
-    const yMid = (C.slots / 2) * step; // 让 slot 中心那张落在 y=0
+    const yMid = (C.slots / 2) * C.yStep; // 让 slot 中心那张落在 y=0
 
     const raycaster = new THREE.Raycaster();
     const meshes = cards.map((c) => c.mesh);
@@ -310,37 +301,10 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
       const isPortrait = w / h < 0.95;
-      camera.position.z = C.camZ * (isPortrait ? 1.45 : 1);
+      camera.position.z = C.camZ * (isPortrait ? 1.24 : 1);
       camera.position.y = C.camY * (isPortrait ? 0.88 : 1);
-      camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), C.radius);
+      camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), 0);
     }
-
-    // 自测钩子：纹理加载状态（排查「卡片黑块」用）
-    (window as unknown as Record<string, unknown>).__swTex = () =>
-      textures.map((t, i) => (t.image ? i + ":ok" : i + ":pending")).join(" ");
-
-    // 自测钩子：各卡投影后的屏幕矩形（量「间隔是否均匀」用）
-    (window as unknown as Record<string, unknown>).__swGeom = () => {
-      const rect = host!.getBoundingClientRect();
-      const out: { slot: number; y: number; x: number; w: number; h: number; t: string }[] = [];
-      for (const c of cards) {
-        const v = c.mesh.position.clone().project(camera);
-        if (Math.abs(v.x) > 1.1 || Math.abs(v.y) > 1.1) continue;
-        // 屏幕上这张卡的半高：用世界半高除以该点的视深再换算成像素
-        const dist = camera.position.distanceTo(c.mesh.position);
-        const hPx = ((C.cardH / 2) / (dist * Math.tan((C.fov * Math.PI) / 360))) * (rect.height / 2);
-        const wPx = ((C.cardW / 2) / (dist * Math.tan((C.fov * Math.PI) / 360))) * (rect.height / 2);
-        out.push({
-          slot: (((cards.indexOf(c) - s) % C.slots) + C.slots) % C.slots,
-          x: Math.round((v.x * 0.5 + 0.5) * rect.width),
-          y: Math.round((-v.y * 0.5 + 0.5) * rect.height),
-          w: Math.round(wPx),
-          h: Math.round(hPx),
-          t: c.work.title.slice(0, 8),
-        });
-      }
-      return out.sort((a, b) => a.y - b.y);
-    };
 
     // 自测钩子：正前方那张卡的屏幕坐标（无头测试用来找可点位置）
     (window as unknown as Record<string, unknown>).__swFront = () => {
@@ -406,18 +370,19 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         const ang = slot * ANGLE;
 
         const tt = now * 0.001;
-        // 关键：相位取自槽位（不是随机相位），起伏就以同一道波沿螺旋传播，
-        // 相邻两卡的间距波动被压到 ±5% 以内，不会出现「一会长一会短」。
-        const ph = slot * 0.8;
-        const y = yMid - slot * step + Math.sin(tt * 0.7 + ph) * 9;
+        const floatAmt = 1;
+        const y =
+          yMid - slot * C.yStep + Math.sin(tt * 0.7 + c.phase) * c.bobY * floatAmt;
         const r =
-          C.radius + Math.sin(tt * 0.5 + ph * 1.3) * 10 + (i === hovering ? 60 : 0);
+          C.radius +
+          Math.sin(tt * 0.5 + c.phase * 1.3) * c.bob +
+          (i === hovering ? 60 : 0);
 
         c.mesh.position.set(r * Math.sin(ang), y, r * Math.cos(ang));
         c.mesh.rotation.set(
-          Math.sin(tt * 0.4 + ph) * 0.008,
-          ang + c.yaw + Math.sin(tt * 0.45 + ph) * 0.01,
-          c.tilt + Math.sin(tt * 0.33 + ph) * 0.02
+          Math.sin(tt * 0.4 + c.phase) * 0.012,
+          ang + Math.sin(tt * 0.45 + c.phase) * c.sway,
+          c.tilt + c.roll + Math.sin(tt * 0.33 + c.phase) * 0.01
         );
 
         // 正对镜头的角度距离 → 背面变暗、失焦
@@ -427,9 +392,6 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
 
         const targetHover = i === hovering ? 1 : 0;
         c.hover += (targetHover - c.hover) * Math.min(1, dt * 8);
-
-        // 封面还没到就别画：未绑定的贴图会渲染成纯黑方块，比“没这张卡”难看得多
-        c.mesh.visible = !!c.mat.map?.image;
 
         if (c.shader) {
           c.shader.uniforms.uDim.value = (1 - back * (1 - C.backDim)) * (1 + c.hover * 0.1);
@@ -456,7 +418,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       if (e.key === "Escape") setActive(null);
     };
     window.addEventListener("keydown", onKey);
-    document.body.classList.add("sw-lock", "sw-page");
+    document.body.classList.add("sw-lock");
 
     return () => {
       cancelAnimationFrame(raf);
@@ -466,7 +428,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       window.removeEventListener("pointerup", onPointerUp);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("keydown", onKey);
-      document.body.classList.remove("sw-lock", "sw-page");
+      document.body.classList.remove("sw-lock");
       geometry.dispose();
       textures.forEach((t) => t.dispose());
       cards.forEach((c) => c.mat.dispose());
