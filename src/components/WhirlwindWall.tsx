@@ -15,37 +15,43 @@ import type { Work } from "@/data/projects";
  * - 滚轮给冲量，松手继续滑行，停手后磁吸回整槽位（构图中心永远有卡）
  */
 const CFG = {
-  cardW: 470,
-  cardH: 264,
+  cardW: 500,
+  cardH: 281,
   segX: 48,
 
-  radius: 860,
-  curveScale: 1.2, // 曲率半径 = radius × 该系数（>1 弧面更舒展）
-  cardsPerTurn: 11, // 密一档 → 卡片连成一条连续弧带（用户要的就是这个「整块流动」的感觉）
-  slots: 88, // 必须是 cardsPerTurn 的整数倍
-  yStep: 145,
+  // 小半径 + 小步进 = 密绕的螺旋臂。之前半径 860 / yStep 145 时，
+  // 绕一圈要升 1595（6 倍卡高），圈与圈之间裂出的大洞比卡还宽，
+  // 屏幕上就只剩正面一张大卡加两条压扁的细边——用户说的「没连起来」。
+  radius: 700,
+  curveScale: 1.5, // 曲率半径 = radius × 该系数（>1 卡片更平，投影更宽、缝更小）
+  cardsPerTurn: 9,
+  slots: 108, // 必须是 cardsPerTurn 的整数倍且为偶数（108 = 12 圈，正中恒有一张落在 y=0）
+  yStep: 40, // 一圈只升 360 ≈ 1.3 卡高 → 上下圈首尾搭上，不再是断开的几层
 
-  // 斜上方视角 + 偏长焦：焦距太短时「正面卡撑大、两侧卡挤扁」，
-  // 沿一条带看过去就是「间隔一会长一会短」。推远 + 收窄视野，
-  // 近端与侧端的尺度差从 1.78 倍降到 1.36 倍，节奏才均匀。
-  camZ: 2500,
-  camY: 650,
+  // 偏广角 + 贴近：一圈刚好装进竖直视野，卡与卡相切，
+  // 整条螺旋读作一条连续的带，而不是散落的几坨。
+  camZ: 1720,
+  camY: 240,
   lookY: 0,
-  fov: 28,
+  fov: 51,
   groupTilt: 0,
 
-  backDim: 0.22,
-  backBlur: 2.4,
+  backDim: 0.85,
+  backBlur: 1.2,
   dimStart: 0.55,
   dimEnd: 2.7,
 
   // 雾要够远，否则远侧整段卡片被压成纯黑，弧带会断开
-  fogNear: 2600,
-  fogFar: 5200,
+  fogNear: 2000,
+  fogFar: 7000,
 
   // 每张卡自己的歪斜量：保持很小，密排时一点歪斜就显乱
   rollAmt: 0.03,
   yawAmt: 0.015,
+
+  // 卡片朝向：1 = 完全贴圆柱（法线径向），0 = 完全朝镜头。
+  // 实测 <1 会让卡片和圆周上的位置错位、露出更大的缝，保持贴柱。
+  face: 1,
 
   wheel: 0.0055,
   ease: 9.5,
@@ -84,6 +90,7 @@ function readOverrides(): typeof CFG {
     fogFar: n("fogf", CFG.fogFar),
     rollAmt: n("roll", CFG.rollAmt),
     yawAmt: n("yaw", CFG.yawAmt),
+    face: n("face", CFG.face),
   } as typeof CFG;
 }
 
@@ -127,7 +134,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     );
     const portrait = host.clientWidth / host.clientHeight < 0.95;
     // 竖屏：镜头跟着收近一点，否则卡片在窄屏里缩成邮票
-    const dollyBase = C.camZ * (portrait ? 1.45 : 1);
+    const dollyBase = C.camZ * (portrait ? 1.22 : 1);
     const camYBase = C.camY * (portrait ? 0.88 : 1);
     const lookYBase = C.lookY * (portrait ? 0.66 : 1);
     camera.position.set(0, camYBase, dollyBase);
@@ -237,7 +244,8 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     let lastY = 0;
     const pointer = new THREE.Vector2(-10, -10);
 
-    const step = C.yStep;
+    // 竖屏：横向被裁得很窄，同样的步进会摞成密不透风的墙，单独放大
+    const step = C.yStep * (portrait ? 1.5 : 1);
     const yMid = (C.slots / 2) * step; // 让 slot 中心那张落在 y=0
 
     const raycaster = new THREE.Raycaster();
@@ -310,7 +318,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
       const isPortrait = w / h < 0.95;
-      camera.position.z = C.camZ * (isPortrait ? 1.45 : 1);
+      camera.position.z = C.camZ * (isPortrait ? 1.22 : 1);
       camera.position.y = C.camY * (isPortrait ? 0.88 : 1);
       camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), C.radius);
     }
@@ -416,7 +424,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         c.mesh.position.set(r * Math.sin(ang), y, r * Math.cos(ang));
         c.mesh.rotation.set(
           Math.sin(tt * 0.4 + ph) * 0.008,
-          ang + c.yaw + Math.sin(tt * 0.45 + ph) * 0.01,
+          ang * C.face + c.yaw + Math.sin(tt * 0.45 + ph) * 0.01,
           c.tilt + Math.sin(tt * 0.33 + ph) * 0.02
         );
 
