@@ -15,36 +15,35 @@ import type { Work } from "@/data/projects";
  * - 滚轮给冲量，松手继续滑行，停手后磁吸回整槽位（构图中心永远有卡）
  */
 const CFG = {
-  cardW: 458,
-  cardH: 258,
-  segX: 56,
+  cardW: 680,
+  cardH: 264,
+  segX: 48,
 
-  // 球面内视角：相机站在球心，卡片贴在半径 radius 的球面上。
-  // 以前的「等角度绕柱」在透视下靠边的卡片会被压扁到正面卡的一半宽，
-  // 间距和卡宽不同步收缩 → 左右间隔一长一短。这里改成
-  // 「屏幕坐标等距 + 反推世界坐标」，间距才是真的恒定。
-  radius: 1000,
-  curveScale: 1, // 曲率半径 = radius，卡片贴着球面弯
+  radius: 860,
+  curveScale: 1.6, // 曲率半径 = radius × 该系数（>1 弧面更舒展）
+  cardsPerTurn: 6, // 卡大、绕得稀 → 读作「一圈悬浮的卡」，不是一条带
+  slots: 90, // 必须是 cardsPerTurn 的整数倍
+  yStep: 120,
 
-  cardsPerTurn: 5, // 一圈 5 张，屏幕上正好看到 3 张完整 + 两侧各半张
-  slots: 105, // 必须是 cardsPerTurn 的整数倍
+  // 斜上方视角：近处大、远处小，螺旋读作一圈立体环（对着参考图调的）
+  camZ: 2600,
+  camY: 650,
+  lookY: 160,
+  fov: 41,
+  groupTilt: 0,
 
-  // 全部按视口宽度取比例，换分辨率/竖屏都不用重调
-  cardSizePx: 0.28, // 卡片屏幕宽 / 视口宽
-  gapPx: 0.012, // 相邻卡屏幕缝隙 / 卡片宽（5% 左右，几乎相接才算「连成一条」）
-  rowStepPx: 0.38, // 相邻槽位垂直位移 / 卡片高（一圈 = rowStep × cardsPerTurn）
+  backDim: 0.3,
+  backBlur: 2.0,
+  dimStart: 0.7,
+  dimEnd: 2.8,
 
-  fov: 51,
-  camY: 0,
-  depthBend: 0.1, // 边缘卡片往远推的比例，给球面纵深；0 = 完全平铺
+  // 远处不能压成纯黑（参考视频里远侧卡依旧读得清），所以雾要推得很远
+  fogNear: 3000,
+  fogFar: 6200,
 
-  face: 0.28, // 侧向收拢系数：0 = 完全正对镜头（缝最匀），1 = 完全贴球面
-  dimEdge: 0.1, // 最边上卡片的亮度（被屏幕切一半的那列要暗下去，不然很吵）
-  blurEdge: 1.1,
-
-  // 每张卡自己的歪斜量：保持很小，密排时一点歪斜就显乱
-  rollAmt: 0.012,
-  yawAmt: 0.008,
+  // 每张卡自己的歪斜量（打破「焊成一条带」的观感）
+  rollAmt: 0.12,
+  yawAmt: 0.09,
 
   wheel: 0.0055,
   ease: 9.5,
@@ -55,7 +54,7 @@ const CFG = {
 
 const TAU = Math.PI * 2;
 
-/** 调试用：?cw=0.3&gap=0.135&step=0.3&turn=6&fov=51&bend=0.1&r=1000 */
+/** 调试用：?r=900&camY=1200&camZ=2200&fov=38&lookY=0&yStep=190&turn=10&curve=1.35&cw=460 */
 function readOverrides(): typeof CFG {
   if (typeof window === "undefined") return CFG;
   const q = new URLSearchParams(window.location.search);
@@ -67,39 +66,33 @@ function readOverrides(): typeof CFG {
     ...CFG,
     radius: n("r", CFG.radius),
     camY: n("camY", CFG.camY),
+    camZ: n("camZ", CFG.camZ),
     fov: n("fov", CFG.fov),
+    lookY: n("lookY", CFG.lookY),
+    yStep: n("yStep", CFG.yStep),
     cardsPerTurn: n("turn", CFG.cardsPerTurn),
     slots: n("slots", CFG.slots),
     curveScale: n("curve", CFG.curveScale),
-    cardSizePx: n("cw", CFG.cardSizePx),
-    gapPx: n("gap", CFG.gapPx),
-    rowStepPx: n("step", CFG.rowStepPx),
-    depthBend: n("bend", CFG.depthBend),
-    dimEdge: n("dim", CFG.dimEdge),
-    blurEdge: n("blur", CFG.blurEdge),
-    face: n("face", CFG.face),
+    cardW: n("cw", CFG.cardW),
+    cardH: n("cw", CFG.cardW) * (9 / 16),
+    backDim: n("dim", CFG.backDim),
+    backBlur: n("blur", CFG.backBlur),
+    groupTilt: n("tilt", CFG.groupTilt),
+    fogNear: n("fog", CFG.fogNear),
+    fogFar: n("fogf", CFG.fogFar),
     rollAmt: n("roll", CFG.rollAmt),
     yawAmt: n("yaw", CFG.yawAmt),
   } as typeof CFG;
 }
 
-/**
- * 把平面卡片卷成球面的一片（参考视频里卡片的上下边也是弧的）。
- * 只用水平弯曲的话，卡片看着像贴在柱子上；上下一起弯才像「球里的一面屏」。
- */
 function curvedGeometry(w: number, h: number, seg: number, r: number) {
-  const segY = Math.max(2, Math.round((seg * h) / w));
-  const g = new THREE.PlaneGeometry(w, h, seg, segY);
+  const g = new THREE.PlaneGeometry(w, h, seg, 1);
   const pos = g.attributes.position;
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i);
-    const y = pos.getY(i);
     const th = x / r;
-    const ph = y / r;
-    const cp = Math.cos(ph);
-    pos.setX(i, r * cp * Math.sin(th));
-    pos.setY(i, r * Math.sin(ph));
-    pos.setZ(i, r * cp * Math.cos(th) - r); // 中间离镜头最近，四周往里收
+    pos.setX(i, r * Math.sin(th));
+    pos.setZ(i, r * Math.cos(th) - r); // 中间离镜头最近，两侧向内收
   }
   g.computeVertexNormals();
   return g;
@@ -118,11 +111,11 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
   useEffect(() => {
     const host = hostRef.current;
     const C = readOverrides();
+    const ANGLE = (Math.PI * 2) / C.cardsPerTurn;
     if (!host) return;
 
     const scene = new THREE.Scene();
-    // 相机在球心，所有卡片的距离都是 radius，雾只用来压一点点远端
-    scene.fog = new THREE.Fog(0x050505, C.radius * 1.25, C.radius * 2.4);
+    scene.fog = new THREE.Fog(0x050505, C.fogNear, C.fogFar);
 
     const camera = new THREE.PerspectiveCamera(
       C.fov,
@@ -131,10 +124,12 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       8000
     );
     const portrait = host.clientWidth / host.clientHeight < 0.95;
-    const camYBase = C.camY;
-    camera.position.set(0, camYBase, 0);
-    // 朝 -z 看，卡片全部摆在 z = -radius 附近
-    camera.lookAt(0, camYBase, -C.radius);
+    // 竖屏：镜头跟着收近一点，否则卡片在窄屏里缩成邮票
+    const dollyBase = C.camZ * (portrait ? 1.65 : 1);
+    const camYBase = C.camY * (portrait ? 0.92 : 1);
+    const lookYBase = C.lookY * (portrait ? 0.66 : 1);
+    camera.position.set(0, camYBase, dollyBase);
+    camera.lookAt(0, lookYBase, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -143,6 +138,7 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     host.appendChild(renderer.domElement);
 
     const group = new THREE.Group();
+    group.rotation.z = C.groupTilt;
     scene.add(group);
 
     /* ---------------------------- 卡片 ---------------------------- */
@@ -171,6 +167,11 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       work: Work;
       tilt: number;
       yaw: number;
+      phase: number;
+      bob: number;
+      bobY: number;
+      sway: number;
+      roll: number;
       hover: number;
     };
 
@@ -178,9 +179,8 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     const hoverTarget = { index: -1 };
 
     for (let i = 0; i < C.slots; i++) {
-      // 作品按固定节拍轮转：同一支每隔 16 个槽位出现一次，
-      // 间隔恒定。原来那套哈希打散会让同一支忽近忽远。
-      const k = i % works.length;
+      // 打散作品索引：同一角度相邻的卡不要总是同一支
+      const k = (i * 3 + Math.floor(i / C.cardsPerTurn) * 5) % works.length;
       const work = works[k];
       const mat = new THREE.MeshBasicMaterial({
         map: textures[k],
@@ -194,9 +194,13 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         mat,
         shader: null,
         work,
-        // 歪斜量做得很小：密排时只要一点随机歪，整条弧带就会显乱
         tilt: (Math.random() - 0.5) * C.rollAmt,
         yaw: (Math.random() - 0.5) * C.yawAmt,
+        phase: Math.random() * TAU,
+        bob: 6 + Math.random() * 14,
+        bobY: 8 + Math.random() * 16,
+        sway: 0.008 + Math.random() * 0.018,
+        roll: (Math.random() - 0.5) * 0.16,
         hover: 0,
       };
 
@@ -239,48 +243,9 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
     let lastY = 0;
     const pointer = new THREE.Vector2(-10, -10);
 
-    /* ---------------- 布局：屏幕坐标量出来，再反推世界坐标 ----------------
-     * 先把「每张卡在屏幕上的中心位置」定死（严格等距），再反算它在 3D 里该站哪。
-     * 这样不管透视怎么压，左右缝永远是同一个值。
-     */
-    const N = Math.max(2, Math.round(C.cardsPerTurn)); // 一圈几张
-    const R = C.radius;
-
-    type Layout = {
-      w: number; h: number; // 视口
-      fpx: number; // 焦距（像素）
-      cardPx: number; // 卡片屏幕宽
-      pitch: number; // 相邻卡屏幕中心距
-      yStep: number; // 相邻槽位屏幕垂直位移
-      scale: number; // 网格缩放（世界 → 屏幕）
-    };
-
-    function layout(): Layout {
-      const w = host!.clientWidth;
-      const h = host!.clientHeight;
-      const fpx = h / 2 / Math.tan((C.fov * Math.PI) / 360);
-      // 竖屏横向窄，卡片相对放大一点，一行大概 2.3 张
-      const cardPx = w * C.cardSizePx * (portrait ? 1.6 : 1);
-      const pitch = cardPx * (1 + C.gapPx);
-      // 竖屏行数太多会糊成“卡片墙”，行距单独拉开
-      const yStep = ((cardPx * C.cardH) / C.cardW) * C.rowStepPx * (portrait ? 1.32 : 1);
-      const scale = (cardPx * R) / (C.cardW * fpx);
-      return { w, h, fpx, cardPx, pitch, yStep, scale };
-    }
-
-    let L = layout();
-
-    /** slot → 屏幕坐标（像素，原点在视口中心，y 向下） */
-    function slotToScreen(slot: number) {
-      const u = slot % N; // 这一圈里的第几张
-      const cyc = Math.floor(slot / N); // 第几圈
-      const rows = Math.max(1, Math.round(C.slots / N));
-      const tx = (u - (N - 1) / 2) * L.pitch;
-      // 竖直方向也居中：cyc 从 0..rows-1 平移成 ±rows/2
-      const ty =
-        -((cyc - (rows - 1) / 2) * N + (u - (N - 1) / 2)) * L.yStep;
-      return { u, cyc, tx, ty };
-    }
+    // 竖屏纵向空间更窄，螺旋间距放大一点，否则一圈叠一圈看着发闷
+    const step = C.yStep * (portrait ? 1.35 : 1);
+    const yMid = (C.slots / 2) * step; // 让 slot 中心那张落在 y=0
 
     const raycaster = new THREE.Raycaster();
     const meshes = cards.map((c) => c.mesh);
@@ -290,12 +255,15 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
       pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointer, camera);
+      // 只挑正面的卡，背面的卡不该能点
       const hits = raycaster.intersectObjects(meshes, false);
       for (const hit of hits) {
         const i = hit.object.userData.index as number;
-        // 只挑朝向镜头那一侧（卡片法线偏角 < 60°）
         const p = hit.object.position;
-        if (p.z > -R * 0.35) return i;
+        const a = Math.atan2(p.x, p.z);
+        const rel = ((a % TAU) + TAU) % TAU;
+        const d = Math.min(rel, TAU - rel);
+        if (d < 1.15) return i;
       }
       return -1;
     }
@@ -348,50 +316,15 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
-      camera.position.set(0, camYBase, 0);
-      camera.lookAt(0, camYBase, -C.radius);
-      L = layout();
+      const isPortrait = w / h < 0.95;
+      camera.position.z = C.camZ * (isPortrait ? 1.65 : 1);
+      camera.position.y = C.camY * (isPortrait ? 0.92 : 1);
+      camera.lookAt(0, C.lookY * (isPortrait ? 0.66 : 1), 0);
     }
 
     // 自测钩子：纹理加载状态（排查「卡片黑块」用）
     (window as unknown as Record<string, unknown>).__swTex = () =>
       textures.map((t, i) => (t.image ? i + ":ok" : i + ":pending")).join(" ");
-
-    // 自测钩子：各卡投影后的真实屏幕包围盒（量「间隔是否均匀」用）
-    (window as unknown as Record<string, unknown>).__swGeom = () => {
-      const rect = host!.getBoundingClientRect();
-      const out: {
-        slot: number; x0: number; x1: number; y0: number; y1: number;
-        cx: number; cy: number; w: number; h: number; t: string;
-      }[] = [];
-      const v = new THREE.Vector3();
-      for (const c of cards) {
-        const pos = c.mesh.geometry.attributes.position;
-        let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-        for (let k = 0; k < pos.count; k++) {
-          v.fromBufferAttribute(pos, k);
-          c.mesh.localToWorld(v);
-          v.project(camera);
-          const sx = (v.x * 0.5 + 0.5) * rect.width;
-          const sy = (-v.y * 0.5 + 0.5) * rect.height;
-          if (sx < x0) x0 = sx;
-          if (sx > x1) x1 = sx;
-          if (sy < y0) y0 = sy;
-          if (sy > y1) y1 = sy;
-        }
-        if (x1 < -rect.width * 0.2 || x0 > rect.width * 1.2) continue;
-        if (y1 < 0 || y0 > rect.height) continue;
-        out.push({
-          slot: (((cards.indexOf(c) - s) % C.slots) + C.slots) % C.slots,
-          x0: Math.round(x0), x1: Math.round(x1),
-          y0: Math.round(y0), y1: Math.round(y1),
-          cx: Math.round((x0 + x1) / 2), cy: Math.round((y0 + y1) / 2),
-          w: Math.round(x1 - x0), h: Math.round(y1 - y0),
-          t: c.work.title.slice(0, 8),
-        });
-      }
-      return out.sort((a, b) => a.cy - b.cy);
-    };
 
     // 自测钩子：正前方那张卡的屏幕坐标（无头测试用来找可点位置）
     (window as unknown as Record<string, unknown>).__swFront = () => {
@@ -454,32 +387,28 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
       for (let i = 0; i < cards.length; i++) {
         const c = cards[i];
         const slot = (((i - s) % C.slots) + C.slots) % C.slots;
-        const { u, tx, ty } = slotToScreen(slot);
+        const ang = slot * ANGLE;
 
         const tt = now * 0.001;
-        const ph = u * 0.9;
+        const floatAmt = 1;
+        const y =
+          yMid - slot * step + Math.sin(tt * 0.7 + c.phase) * c.bobY * floatAmt;
+        const r =
+          C.radius +
+          Math.sin(tt * 0.5 + c.phase * 1.3) * c.bob +
+          (i === hovering ? 60 : 0);
 
-        // 屏幕坐标（像素，原点视口中心）
-        const sx = tx;
-        const sy = ty + Math.sin(tt * 0.7 + ph) * 3;
-
-        // 边缘卡片往远推一点，球面才有纵深；同时把屏幕坐标反推成世界坐标
-        const k = Math.min(1, Math.abs(sx) / (L.w * 0.5));
-        const depth = R * (1 + C.depthBend * k * k) - (i === hovering ? R * 0.06 : 0);
-
-        c.mesh.position.set(
-          (sx * depth) / L.fpx,
-          camYBase - (sy * depth) / L.fpx,
-          -depth
-        );
-        // 朝球心（=镜头）微收。系数刻意压小：完全贴球面的话，
-        // 侧向卡片的两端一近一远，投影会被透视拉宽 20%+，缝就忽宽忽窄了。
-        const yawToCenter = Math.atan2(sx, L.fpx) * C.face; // face: 0 = 全正对镜头
+        c.mesh.position.set(r * Math.sin(ang), y, r * Math.cos(ang));
         c.mesh.rotation.set(
-          Math.sin(tt * 0.4 + ph) * 0.004,
-          -yawToCenter + c.yaw + Math.sin(tt * 0.45 + ph) * 0.006,
-          c.tilt + Math.sin(tt * 0.33 + ph) * 0.008
+          Math.sin(tt * 0.4 + c.phase) * 0.012,
+          ang + c.yaw + Math.sin(tt * 0.45 + c.phase) * c.sway,
+          c.tilt + c.roll + Math.sin(tt * 0.33 + c.phase) * 0.01
         );
+
+        // 正对镜头的角度距离 → 背面变暗、失焦
+        const rel = ((ang % TAU) + TAU) % TAU;
+        const d = Math.min(rel, TAU - rel);
+        const back = THREE.MathUtils.smoothstep(d, C.dimStart, C.dimEnd);
 
         const targetHover = i === hovering ? 1 : 0;
         c.hover += (targetHover - c.hover) * Math.min(1, dt * 8);
@@ -488,14 +417,13 @@ export default function WhirlwindWall({ works }: { works: Work[] }) {
         c.mesh.visible = !!c.mat.map?.image;
 
         if (c.shader) {
-          const edge = THREE.MathUtils.smoothstep(k, 0.42, 1.05);
-          c.shader.uniforms.uDim.value =
-            (1 - edge * (1 - C.dimEdge)) * (1 + c.hover * 0.1);
-          c.shader.uniforms.uBlur.value = edge * C.blurEdge + speedBlur;
+          c.shader.uniforms.uDim.value = (1 - back * (1 - C.backDim)) * (1 + c.hover * 0.1);
+          c.shader.uniforms.uBlur.value = back * C.backBlur + speedBlur;
         }
-        // 屏幕宽 = cardW × scale × fpx / depth，要它恒定就得 scale ∝ depth
-        c.mesh.scale.setScalar(L.scale * (depth / R) * (1 + c.hover * 0.05));
+        c.mesh.scale.setScalar(1 + c.hover * 0.06);
       }
+
+      camera.position.z += (dollyBase + Math.min(fast * 0.5, 1) * 90 - camera.position.z) * Math.min(1, dt * 3);
 
       if (fade < 1) {
         fade = Math.min(1, fade + dt * 1.2);
