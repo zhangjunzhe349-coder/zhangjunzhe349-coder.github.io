@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { works, worksCandidates, worksFeatured } from "@/data/projects";
+import { personalWorks } from "@/data/personal";
 import { keywords, site } from "@/data/site";
 import WorkIndex from "@/components/WorkIndex";
+import PersonalWorks from "@/components/PersonalWorks";
 
 /** 跑马灯内容重复两遍，配合 translate3d(-50%) 实现无缝循环 */
 const marqueeTrack = [...keywords, ...keywords];
@@ -138,12 +140,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============ ③ 工作经历：时间线 ============ */}
+      {/* ============ ③ 个人作品：练习 / 情绪短片 / 长篇（商业线之外的另一条线） ============ */}
+      <section id="personal" className="section" aria-labelledby="personal-title">
+        <div className="wrap">
+          <SectionHead
+            id="personal-title"
+            eyebrow="03 · PERSONAL"
+            title="个人作品"
+            note={`${String(personalWorks.length).padStart(2, "0")} 支 · 练习 / 短片 / 长篇`}
+          />
+
+          <PersonalWorks works={personalWorks} />
+        </div>
+      </section>
+
+      {/* ============ ④ 工作经历：时间线 ============ */}
       <section id="experience" className="section" aria-labelledby="experience-title">
         <div className="wrap">
           <SectionHead
             id="experience-title"
-            eyebrow="03 · EXPERIENCE"
+            eyebrow="04 · EXPERIENCE"
             title="工作经历"
           />
 
@@ -181,12 +197,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ============ ④ 技能 & 工具：四大类，标签速览 ============ */}
+      {/* ============ ⑤ 技能 & 工具：四大类，标签速览 ============ */}
       <section id="skills" className="section" aria-labelledby="skills-title">
         <div className="wrap">
           <SectionHead
             id="skills-title"
-            eyebrow="04 · SKILLS"
+            eyebrow="05 · SKILLS"
             title="技能 & 工具"
             note="标签速览 · 详细说明在 PDF 简历"
           />

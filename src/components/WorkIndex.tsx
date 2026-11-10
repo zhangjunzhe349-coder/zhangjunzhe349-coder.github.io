@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import type { Work } from "@/data/projects";
+import { publishJson, storedToken } from "@/lib/ghPublish";
 
 /**
  * 作品索引：封面卡片网格（桌面 4 列）。
@@ -15,21 +16,8 @@ import type { Work } from "@/data/projects";
  * 封面走 720px 的 WebP 小图（tools/gen-covers-sm.mjs 生成），首屏才快得起来。
  */
 
-/** 发布通道：GitHub Contents API。Token 由使用者在本机粘贴一次，只存 localStorage。 */
-const REPO = "zhangjunzhe349-coder/zhangjunzhe349-coder.github.io";
+/** 发布通道：GitHub Contents API（详见 src/lib/ghPublish.ts），Token 只存 localStorage。 */
 const FILE_PATH = "src/data/featureOrder.json";
-const BRANCH = "main";
-const TOKEN_KEY = "ph_gh_pat";
-
-/** UTF-8 安全的 base64（btoa 只吃 latin1） */
-function toBase64(s: string) {
-  const bytes = new TextEncoder().encode(s);
-  let bin = "";
-  bytes.forEach((b) => {
-    bin += String.fromCharCode(b);
-  });
-  return btoa(bin);
-}
 
 type Status = { kind: "idle" | "saving" | "ok" | "err"; text?: string };
 
@@ -112,44 +100,19 @@ export default function WorkIndex({
 
   async function publish(pat: string) {
     setStatus({ kind: "saving", text: "正在提交到 GitHub…" });
-    const api = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${pat}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-    };
     try {
-      const got = await fetch(`${api}?ref=${BRANCH}`, { headers, cache: "no-store" });
-      if (!got.ok) {
-        throw new Error(
-          got.status === 401 || got.status === 403
-            ? "Token 无效或没有该仓库的写入权限"
-            : `读取文件失败（${got.status}）`
-        );
-      }
-      const meta = (await got.json()) as { sha: string };
       const payload = {
         order: items.map((w) => w.no),
         hidden: hiddenItems.map((w) => w.no),
       };
-      const body = `${JSON.stringify(payload, null, 2)}\n`;
-      const put = await fetch(api, {
-        method: "PUT",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: `chore(home): 首页作品顺序 ${payload.order.join(" → ")}${
-            payload.hidden.length ? ` · 隐藏 ${payload.hidden.join(",")}` : ""
-          }`,
-          content: toBase64(body),
-          sha: meta.sha,
-          branch: BRANCH,
-        }),
-      });
-      if (!put.ok) {
-        const err = (await put.json().catch(() => ({}))) as { message?: string };
-        throw new Error(err.message || `提交失败（${put.status}）`);
-      }
-      localStorage.setItem(TOKEN_KEY, pat);
+      await publishJson(
+        FILE_PATH,
+        payload,
+        `chore(home): 首页作品顺序 ${payload.order.join(" → ")}${
+          payload.hidden.length ? ` · 隐藏 ${payload.hidden.join(",")}` : ""
+        }`,
+        pat
+      );
       setSorting(false);
       setAskToken(false);
       setStatus({
@@ -172,7 +135,7 @@ export default function WorkIndex({
       });
       return;
     }
-    const pat = localStorage.getItem(TOKEN_KEY) ?? "";
+    const pat = storedToken();
     if (!pat) {
       setAskToken(true);
       setStatus({ kind: "idle" });

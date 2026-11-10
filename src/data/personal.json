@@ -1,0 +1,34 @@
+{
+  "works": [
+    {
+      "id": "jike",
+      "no": "P1",
+      "title": "极氪",
+      "subtitle": "ZEEKR 001 FR",
+      "note": "商业广告练习",
+      "duration": "01:05",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/personal/jike.mp4",
+      "poster": "/images/covers/personal/jike.jpg"
+    },
+    {
+      "id": "yanjing",
+      "no": "P2",
+      "title": "眼镜",
+      "subtitle": "GLASSES",
+      "note": "个人情绪向短片",
+      "duration": "00:33",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/personal/yanjing.mp4",
+      "poster": "/images/covers/personal/yanjing.jpg"
+    },
+    {
+      "id": "yujin",
+      "no": "P3",
+      "title": "余烬",
+      "subtitle": "EMBER",
+      "note": "个人长篇作品",
+      "duration": "16:21",
+      "video": "https://portfolio-videos-1496687910.cos.ap-guangzhou.myqcloud.com/videos/personal/yujin.mp4",
+      "poster": "/images/covers/personal/yujin.jpg"
+    }
+  ]
+}

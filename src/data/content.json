@@ -135,6 +135,10 @@
         "href": "/#projects"
       },
       {
+        "label": "个人作品",
+        "href": "/#personal"
+      },
+      {
         "label": "工作经历",
         "href": "/#experience"
       },
