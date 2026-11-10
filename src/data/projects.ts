@@ -11,6 +11,7 @@
  */
 
 import content from "./content.json";
+import featureOrder from "./featureOrder.json";
 
 export interface Work {
   id: string;
@@ -55,7 +56,24 @@ export const worksOrdered: Work[] = [...works].reverse();
 /**
  * 首页主列表精选（按素材序号保留 2/3/4/6/10/11/12）。
  * 完整 16 支在 /all 的旋风界面里，通过「查看所有」进入。
+ *
+ * 展示顺序由 ./featureOrder.json 的 order 决定（首页「排序」按钮写入，
+ * 提交后 GitHub Actions 重建，所有访客看到同一个顺序）。
+ * 该文件缺失或为空时回退到下面的默认顺序。
  */
 const FEATURED_NO = ["02", "03", "04", "06", "10", "11", "12"];
 
-export const worksFeatured: Work[] = worksOrdered.filter((w) => FEATURED_NO.includes(w.no));
+const ORDER: string[] = Array.isArray(featureOrder.order)
+  ? featureOrder.order.filter((n) => typeof n === "string")
+  : [];
+
+const ORDER_SET = new Set(ORDER.length > 0 ? ORDER : FEATURED_NO);
+
+const rankOf = (no: string) => {
+  const i = ORDER.indexOf(no);
+  return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+};
+
+export const worksFeatured: Work[] = works
+  .filter((w) => ORDER_SET.has(w.no))
+  .sort((a, b) => rankOf(a.no) - rankOf(b.no));

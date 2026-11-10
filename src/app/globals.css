@@ -619,6 +619,269 @@ img {
   margin: 0;
 }
 
+/* ---- 首页作品排序：点「排序」进入，顺序写回仓库让所有访客一致 ---- */
+.work-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  min-height: 34px;
+  margin-bottom: 16px;
+}
+
+.work-tools__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 15px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--color-text-faint);
+  background: transparent;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.work-tools__toggle:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.work-tools__hint {
+  margin-right: auto;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-text-faint);
+}
+
+.work-tools__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.work-tools__btn {
+  padding: 7px 15px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    background var(--dur-base) var(--ease-out);
+}
+
+.work-tools__btn:hover:not(:disabled) {
+  color: var(--color-text);
+  border-color: var(--color-text-muted);
+}
+
+.work-tools__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.work-tools__btn.is-primary {
+  color: var(--color-text-invert);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.work-tools__btn.is-primary:hover:not(:disabled) {
+  color: var(--color-text-invert);
+  border-color: var(--color-accent);
+  filter: brightness(1.08);
+}
+
+.work-tools__token {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+}
+
+.work-tools__token-link {
+  display: inline-block;
+  margin-left: 8px;
+  color: var(--color-accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 90, 31, 0.4);
+  padding-bottom: 1px;
+}
+
+.work-tools__token-link:hover {
+  border-bottom-color: var(--color-accent);
+}
+
+.work-tools__token code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-accent);
+}
+
+.work-tools__token-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.work-tools__token-row input {
+  flex: 1 1 260px;
+  padding: 9px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text);
+  background: var(--color-bg-deep);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.work-tools__token-row input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.work-tools__status {
+  margin: -6px 0 16px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-faint);
+}
+
+.work-tools__status.is-ok {
+  color: var(--color-accent);
+}
+
+.work-tools__status.is-err {
+  color: #ff8d6b;
+}
+
+/* 排序模式下：光标变抓手，禁掉页面滚动手势，悬停不再浮起 */
+.work-grid.is-sorting .work-card {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.work-grid.is-sorting .work-card:hover .work-card__media {
+  transform: none;
+  border-color: var(--color-line-strong);
+  box-shadow: none;
+}
+
+.work-grid.is-sorting .work-card:hover .work-card__media img {
+  transform: none;
+}
+
+.work-card.is-dragging .work-card__media {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-accent-soft);
+  opacity: 0.72;
+}
+
+.work-card.is-dragging {
+  cursor: grabbing;
+}
+
+/* 位次徽章（排序模式）：左上角，橙底黑字 */
+.work-card__pos {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--color-text-invert);
+  background: var(--color-accent);
+  border-radius: 4px;
+}
+
+/* 左右微调箭头（排序模式）：触屏也能用 */
+.work-card__movers {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.work-card__movers button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--color-text);
+  background: rgba(6, 5, 5, 0.72);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.work-card__movers button:hover:not(:disabled) {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.work-card__movers button:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+/* 小屏：卡片本身只有 160px 宽，箭头和徽章都收小，别盖住画面 */
+@media (max-width: 640px) {
+  .work-card__movers {
+    right: 8px;
+    bottom: 8px;
+    gap: 4px;
+  }
+
+  .work-card__movers button {
+    width: 26px;
+    height: 26px;
+  }
+
+  .work-card__pos {
+    top: 8px;
+    left: 8px;
+    min-width: 23px;
+    height: 19px;
+    font-size: 10px;
+  }
+
+  .work-tools {
+    gap: 10px;
+  }
+
+  .work-tools__hint {
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+  }
+}
+
 /* ---- 作品卡片网格：封面即入口（桌面 4 列） ---- */
 .work-grid {
   display: grid;
