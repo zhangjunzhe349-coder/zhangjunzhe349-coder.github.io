@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { works, worksFeatured } from "@/data/projects";
+import { works, worksCandidates, worksFeatured } from "@/data/projects";
 import { keywords, site } from "@/data/site";
 import WorkIndex from "@/components/WorkIndex";
 
@@ -134,7 +134,7 @@ export default function Home() {
             ).padStart(2, "0")} 支成片`}
           />
 
-          <WorkIndex works={worksFeatured} total={works.length} />
+          <WorkIndex works={worksFeatured} pool={worksCandidates} total={works.length} />
         </div>
       </section>
 

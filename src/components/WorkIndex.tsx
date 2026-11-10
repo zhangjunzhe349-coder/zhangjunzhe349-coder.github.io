@@ -6,9 +6,11 @@ import type { Work } from "@/data/projects";
 
 /**
  * 作品索引：封面卡片网格（桌面 4 列）。
- * 点「排序」进入排序模式：拖动封面（或点左右箭头）调整顺序，
- * 「保存并发布」把新顺序写进仓库的 src/data/featureOrder.json，
- * GitHub Actions 重建后所有访客看到同一个顺序。
+ * 点「排序」进入排序模式：
+ *   · 拖动封面（或点左右箭头）调整顺序
+ *   · 点封面右上角的眼睛图标把某支移出首页，网格下方「已隐藏」区可随时放回
+ *   ·「保存并发布」把 order / hidden 写进仓库的 src/data/featureOrder.json，
+ *     GitHub Actions 重建后所有访客看到同一结果。
  *
  * 封面走 720px 的 WebP 小图（tools/gen-covers-sm.mjs 生成），首屏才快得起来。
  */
@@ -33,12 +35,16 @@ type Status = { kind: "idle" | "saving" | "ok" | "err"; text?: string };
 
 export default function WorkIndex({
   works,
+  pool,
   total,
 }: {
   works: Work[];
+  /** 候选池（含被隐藏的），排序模式用它把隐藏的作品列出来恢复 */
+  pool: Work[];
   total: number;
 }) {
   const [items, setItems] = useState<Work[]>(works);
+  const [hiddenItems, setHiddenItems] = useState<Work[]>([]);
   const [sorting, setSorting] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -48,12 +54,14 @@ export default function WorkIndex({
 
   function startSort() {
     setItems(works);
+    setHiddenItems(pool.filter((p) => !works.some((w) => w.id === p.id)));
     setStatus({ kind: "idle" });
     setSorting(true);
   }
 
   function cancelSort() {
     setItems(works);
+    setHiddenItems([]);
     setDragIdx(null);
     dragFrom.current = null;
     setSorting(false);
@@ -67,6 +75,18 @@ export default function WorkIndex({
     const [card] = next.splice(from, 1);
     next.splice(to, 0, card);
     setItems(next);
+  }
+
+  function hideAt(i: number) {
+    const card = items[i];
+    if (!card) return;
+    setItems(items.filter((_, j) => j !== i));
+    setHiddenItems([...hiddenItems, card]);
+  }
+
+  function restore(card: Work) {
+    setHiddenItems(hiddenItems.filter((h) => h.id !== card.id));
+    setItems([...items, card]);
   }
 
   function onGridPointerMove(e: React.PointerEvent<HTMLDivElement>) {
@@ -108,12 +128,18 @@ export default function WorkIndex({
         );
       }
       const meta = (await got.json()) as { sha: string };
-      const body = `${JSON.stringify({ order: items.map((w) => w.no) }, null, 2)}\n`;
+      const payload = {
+        order: items.map((w) => w.no),
+        hidden: hiddenItems.map((w) => w.no),
+      };
+      const body = `${JSON.stringify(payload, null, 2)}\n`;
       const put = await fetch(api, {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: `chore(home): 首页作品顺序 ${items.map((w) => w.no).join(" → ")}`,
+          message: `chore(home): 首页作品顺序 ${payload.order.join(" → ")}${
+            payload.hidden.length ? ` · 隐藏 ${payload.hidden.join(",")}` : ""
+          }`,
           content: toBase64(body),
           sha: meta.sha,
           branch: BRANCH,
@@ -128,7 +154,7 @@ export default function WorkIndex({
       setAskToken(false);
       setStatus({
         kind: "ok",
-        text: "已提交，GitHub 正在重建，约 1~2 分钟后所有人看到新顺序",
+        text: "已提交，GitHub 正在重建，约 1~2 分钟后所有人看到新的顺序与显示",
       });
     } catch (e) {
       setStatus({
@@ -139,6 +165,13 @@ export default function WorkIndex({
   }
 
   function onSave() {
+    if (items.length === 0) {
+      setStatus({
+        kind: "err",
+        text: "至少保留一支作品，否则首页就没有作品列表了",
+      });
+      return;
+    }
     const pat = localStorage.getItem(TOKEN_KEY) ?? "";
     if (!pat) {
       setAskToken(true);
@@ -170,9 +203,49 @@ export default function WorkIndex({
           {work.no}
         </span>
         {sortingNow ? (
-          <span className="work-card__pos u-mono" aria-hidden="true">
-            {String(i + 1).padStart(2, "0")}
-          </span>
+          <>
+            <span className="work-card__pos u-mono" aria-hidden="true">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <button
+              type="button"
+              className="work-card__hide"
+              aria-label={`不在首页显示《${work.title}》`}
+              title="不在首页显示"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={() => hideAt(i)}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 5.1A10.9 10.9 0 0112 5c5 0 9.3 3.4 10.7 7a11.6 11.6 0 01-3.3 4.4" />
+                <path d="M6.2 6.2A11.8 11.8 0 001.3 12c1.4 3.6 5.7 7 10.7 7 1.7 0 3.3-.4 4.7-1.1" />
+              </svg>
+            </button>
+            <span className="work-card__movers">
+              <button
+                type="button"
+                aria-label="向前移动一位"
+                disabled={i === 0}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => move(i, -1)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 18l-6-6 6-6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="向后移动一位"
+                disabled={i === items.length - 1}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => move(i, 1)}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </button>
+            </span>
+          </>
         ) : (
           <span className="work-card__play" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 24 24">
@@ -180,32 +253,6 @@ export default function WorkIndex({
             </svg>
           </span>
         )}
-        {sortingNow ? (
-          <span className="work-card__movers">
-            <button
-              type="button"
-              aria-label="向前移动一位"
-              disabled={i === 0}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => move(i, -1)}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              aria-label="向后移动一位"
-              disabled={i === items.length - 1}
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={() => move(i, 1)}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          </span>
-        ) : null}
       </span>
     );
   }
@@ -216,7 +263,7 @@ export default function WorkIndex({
         {sorting ? (
           <>
             <p className="work-tools__hint u-mono">
-              拖动封面调整顺序 · 左上角数字是位次
+              拖动调整顺序 · 点眼睛图标移出首页 · 左上角数字是位次
             </p>
             <div className="work-tools__actions">
               <button type="button" className="work-tools__btn" onClick={startSort}>
@@ -240,7 +287,7 @@ export default function WorkIndex({
             type="button"
             className="work-tools__toggle"
             onClick={startSort}
-            aria-label="调整首页作品顺序"
+            aria-label="调整首页作品顺序与显示"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M7 4v16M7 4L4 7M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3" />
@@ -253,7 +300,7 @@ export default function WorkIndex({
       {askToken ? (
         <div className="work-tools__token">
           <p>
-            需要一次 GitHub Token（勾选 <code>repo</code> 权限）才能把顺序发布给所有人。
+            需要一次 GitHub Token（勾选 <code>repo</code> 权限）才能把结果发布给所有人。
             只保存在本机浏览器，不会上传到别处，随时可在浏览器里清除。
             <a
               className="work-tools__token-link"
@@ -342,6 +389,35 @@ export default function WorkIndex({
         )}
       </div>
 
+      {/* 排序模式的「已隐藏」区：点一下放回首页 */}
+      {sorting && hiddenItems.length > 0 ? (
+        <div className="work-hidden">
+          <p className="work-hidden__label u-mono">
+            已隐藏 {String(hiddenItems.length).padStart(2, "0")} 支 · 点一下放回首页
+          </p>
+          <div className="work-hidden__row">
+            {hiddenItems.map((w) => (
+              <button
+                key={w.id}
+                type="button"
+                className="work-hidden__item"
+                onClick={() => restore(w)}
+                title="放回首页"
+              >
+                <span className="work-hidden__thumb">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={w.posterSmJpg} alt="" loading="lazy" decoding="async" />
+                </span>
+                <span className="work-hidden__name">{w.title}</span>
+                <span className="work-hidden__plus" aria-hidden="true">
+                  +
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* 完整作品走旋风界面：同一站点内的另一个视图，不是外链 */}
       <Link href="/all" className="all-entry rise">
         <span className="all-entry__body">
@@ -355,17 +431,7 @@ export default function WorkIndex({
         </span>
         <span className="all-entry__cta">
           进入旋风视图
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M7 17L17 7M9 7h8v8" />
           </svg>
         </span>

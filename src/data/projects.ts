@@ -63,11 +63,18 @@ export const worksOrdered: Work[] = [...works].reverse();
  */
 const FEATURED_NO = ["02", "03", "04", "06", "10", "11", "12"];
 
-const ORDER: string[] = Array.isArray(featureOrder.order)
-  ? featureOrder.order.filter((n) => typeof n === "string")
-  : [];
+const cleanNo = (list: unknown): string[] =>
+  Array.isArray(list) ? list.filter((n): n is string => typeof n === "string") : [];
 
-const ORDER_SET = new Set(ORDER.length > 0 ? ORDER : FEATURED_NO);
+const ORDER: string[] = cleanNo(featureOrder.order);
+/** 被作者手动关掉、「不在首页显示」的作品编号 */
+const HIDDEN: string[] = cleanNo(featureOrder.hidden);
+
+/** 候选池：order 里排前面的，加上被隐藏的（隐藏的排在末尾，恢复时接在后面） */
+const CANDIDATES: string[] =
+  ORDER.length > 0 || HIDDEN.length > 0 ? [...ORDER, ...HIDDEN.filter((n) => !ORDER.includes(n))] : FEATURED_NO;
+
+const ORDER_SET = new Set(CANDIDATES.filter((no) => !HIDDEN.includes(no)));
 
 const rankOf = (no: string) => {
   const i = ORDER.indexOf(no);
@@ -77,3 +84,11 @@ const rankOf = (no: string) => {
 export const worksFeatured: Work[] = works
   .filter((w) => ORDER_SET.has(w.no))
   .sort((a, b) => rankOf(a.no) - rankOf(b.no));
+
+/**
+ * 候选池（含被隐藏的）：首页排序面板要用它把隐藏的作品列出来恢复。
+ * 顺序跟 CANDIDATES 走，这样隐藏项自然排在末尾。
+ */
+export const worksCandidates: Work[] = CANDIDATES.map((no) =>
+  works.find((w) => w.no === no)
+).filter((w): w is Work => Boolean(w));
